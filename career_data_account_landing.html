@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Career Data Account — 활동 목록이 아니라, 증거 있는 역량 자산</title>
+<meta name="description" content="AI가 학생의 경험에서 역량을 발견하고 증거와 함께 자산으로 만드는 AI 포트폴리오 코치 시스템. K-CESA·NCS 표준 매핑.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+
+<style>
+:root {
+  /* Primitive — OKLCH */
+  --ink-900: oklch(22% 0.04 250);
+  --ink-800: oklch(30% 0.045 250);
+  --ink-700: oklch(40% 0.04 250);
+  --ink-500: oklch(55% 0.035 250);
+  --ink-400: oklch(65% 0.025 250);
+  --ink-300: oklch(78% 0.018 250);
+
+  --paper-50:  oklch(98.5% 0.008 80);
+  --paper-100: oklch(96.5% 0.013 80);
+  --paper-200: oklch(94% 0.018 80);
+  --paper-300: oklch(89% 0.022 80);
+  --paper-400: oklch(82% 0.025 80);
+
+  --gold-700: oklch(48% 0.12 65);
+  --gold-600: oklch(58% 0.13 70);
+  --gold-500: oklch(68% 0.12 75);
+  --gold-200: oklch(88% 0.06 80);
+  --gold-100: oklch(94% 0.035 80);
+
+  /* Semantic */
+  --bg: var(--paper-100);
+  --bg-elev: var(--paper-50);
+  --surface: var(--paper-200);
+  --surface-strong: var(--paper-300);
+  --text-primary: var(--ink-900);
+  --text-secondary: var(--ink-700);
+  --text-muted: var(--ink-500);
+  --text-faint: var(--ink-400);
+  --border: var(--paper-300);
+  --border-strong: var(--paper-400);
+  --border-ink: var(--ink-300);
+  --accent: var(--gold-700);
+  --accent-hover: oklch(42% 0.13 65);
+  --accent-bg: var(--gold-100);
+  --accent-bg-strong: var(--gold-200);
+  --ink: var(--ink-900);
+
+  --font-serif: 'Newsreader', 'Pretendard Variable', ui-serif, Georgia, serif;
+  --font-sans: 'Pretendard Variable', system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-full: 9999px;
+
+  --container: 1180px;
+  --container-prose: 720px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text-primary);
+  line-height: 1.7;
+  letter-spacing: -0.01em;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Paper texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.04;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* Type */
+h1, h2, h3, h4 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+}
+h1 { font-size: clamp(2.5rem, 5.5vw, 4.5rem); font-weight: 400; }
+h2 { font-size: clamp(2rem, 3.8vw, 3rem); font-weight: 400; }
+h3 { font-size: clamp(1.25rem, 1.8vw, 1.5rem); font-weight: 500; }
+h4 { font-size: 1.0625rem; font-weight: 500; }
+
+p { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+.faint { color: var(--text-faint); }
+
+/* Citation marker — SIGNATURE MOTION */
+.cite {
+  font-family: var(--font-sans);
+  font-size: 0.65em;
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--accent-bg);
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  margin-left: 4px;
+  vertical-align: super;
+  line-height: 1;
+  letter-spacing: 0;
+  cursor: help;
+  position: relative;
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(-2px) scale(0.85);
+  transition: opacity 0.6s cubic-bezier(0, 0, 0.2, 1) 0.2s,
+              transform 0.6s cubic-bezier(0, 0, 0.2, 1) 0.2s,
+              background 0.18s ease;
+}
+.in .cite, .cite.in { opacity: 1; transform: translateY(0) scale(1); }
+.cite:hover { background: var(--accent-bg-strong); }
+.cite[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink-900);
+  color: var(--paper-50);
+  font-size: 11px;
+  font-weight: 400;
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+  max-width: 280px;
+  white-space: normal;
+  width: max-content;
+  max-width: 240px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  z-index: 10;
+  letter-spacing: -0.005em;
+  line-height: 1.4;
+}
+.cite:hover::after { opacity: 1; }
+
+/* Container */
+.container {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 32px;
+  position: relative;
+  z-index: 2;
+}
+@media (max-width: 640px) { .container { padding: 0 20px; } }
+.prose { max-width: var(--container-prose); }
+
+/* Section */
+.section {
+  padding: clamp(80px, 11vw, 144px) 0;
+  position: relative;
+  z-index: 2;
+}
+.section.tight { padding: clamp(56px, 8vw, 96px) 0; }
+.section + .section {
+  border-top: 1px solid var(--border);
+}
+
+/* Eyebrow */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+.eyebrow::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: var(--border-ink);
+}
+
+/* Section title */
+.section-title { margin-bottom: 20px; }
+.section-lede { font-size: 1.0625rem; color: var(--text-secondary); max-width: 580px; line-height: 1.7; }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  padding: 14px 26px;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  letter-spacing: -0.01em;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  white-space: nowrap;
+}
+.btn-primary {
+  background: var(--ink-900);
+  color: var(--paper-50);
+  border-color: var(--ink-900);
+}
+.btn-primary:hover {
+  background: var(--ink-800);
+  transform: translateY(-1px);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+.btn-ghost:hover {
+  border-color: var(--ink-700);
+  background: var(--bg-elev);
+}
+.btn-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+  font-weight: 500;
+  font-size: 15px;
+  text-decoration: none;
+  transition: gap 0.2s ease, color 0.15s ease;
+}
+.btn-text:hover { gap: 10px; color: var(--accent-hover); }
+.btn-text svg { width: 14px; height: 14px; }
+
+/* NAV */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: color-mix(in oklch, var(--bg) 90%, transparent);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 68px;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 32px;
+}
+.brand {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  text-decoration: none;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.brand-mark {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--accent);
+  border-radius: 2px;
+  position: relative;
+  transform: translateY(2px);
+}
+.brand-mark::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  background: var(--accent);
+  border-radius: 1px;
+}
+.nav-links {
+  display: flex;
+  gap: 36px;
+  list-style: none;
+}
+.nav-links a {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+  transition: color 0.15s ease;
+}
+.nav-links a:hover { color: var(--text-primary); }
+@media (max-width: 880px) { .nav-links { display: none; } .nav-inner { padding: 0 20px; } }
+
+/* HERO */
+.hero {
+  padding: clamp(80px, 12vw, 160px) 0 clamp(96px, 14vw, 180px);
+  position: relative;
+}
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 80px;
+  align-items: center;
+}
+@media (max-width: 920px) { .hero-grid { grid-template-columns: 1fr; gap: 48px; } }
+
+.hero h1 {
+  margin: 16px 0 28px;
+}
+.hero h1 em {
+  font-style: italic;
+  color: var(--accent);
+}
+.hero-lede {
+  font-size: clamp(1.0625rem, 1.5vw, 1.1875rem);
+  color: var(--text-secondary);
+  max-width: 500px;
+  margin-bottom: 36px;
+  line-height: 1.65;
+}
+.hero-actions {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 40px;
+}
+.hero-meta {
+  display: flex;
+  gap: 24px;
+  font-size: 13px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+}
+.hero-meta span { display: inline-flex; align-items: center; gap: 6px; }
+.hero-meta span::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* Hero artifact — catalog card */
+.artifact {
+  position: relative;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow:
+    0 1px 2px oklch(20% 0.04 250 / 0.04),
+    0 8px 24px oklch(20% 0.04 250 / 0.06);
+  transform: rotate(-1.2deg);
+  transition: transform 0.4s cubic-bezier(0, 0, 0.2, 1);
+}
+.artifact:hover { transform: rotate(0deg) translateY(-2px); }
+.artifact-stamp {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.artifact-label {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+.artifact-title {
+  font-family: var(--font-serif);
+  font-size: 1.375rem;
+  font-weight: 500;
+  line-height: 1.3;
+  margin-bottom: 24px;
+  letter-spacing: -0.02em;
+}
+.artifact-row {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 16px;
+  padding: 10px 0;
+  border-top: 1px dashed var(--border-strong);
+  font-size: 13.5px;
+}
+.artifact-row .k {
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+.artifact-row .v { color: var(--text-primary); }
+.artifact-comp {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 500;
+  margin-right: 4px;
+  margin-bottom: 4px;
+}
+.artifact-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 11.5px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  letter-spacing: 0;
+}
+
+/* PROOF BAR */
+.proof-bar {
+  background: var(--bg-elev);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 32px 0;
+}
+.proof-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 56px;
+  align-items: center;
+}
+@media (max-width: 760px) { .proof-grid { grid-template-columns: 1fr; gap: 24px; } }
+.proof-label {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 500;
+  max-width: 180px;
+  line-height: 1.5;
+}
+.proof-items {
+  display: flex;
+  gap: 48px;
+  flex-wrap: wrap;
+}
+.proof-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.proof-item-label {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.proof-item-value {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  color: var(--text-primary);
+  letter-spacing: -0.015em;
+}
+
+/* PROBLEM */
+.problem-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+  margin-top: 56px;
+  border-top: 1px solid var(--border-ink);
+  border-bottom: 1px solid var(--border-ink);
+}
+@media (max-width: 760px) { .problem-cards { grid-template-columns: 1fr; } }
+.problem-card {
+  padding: 36px 32px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+@media (min-width: 761px) {
+  .problem-card:nth-child(2n) { border-right: none; }
+  .problem-card:nth-last-child(-n+2) { border-bottom: none; }
+}
+@media (max-width: 760px) {
+  .problem-card { border-right: none; }
+  .problem-card:last-child { border-bottom: none; }
+}
+.problem-num {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: var(--accent);
+  font-style: italic;
+  margin-bottom: 12px;
+}
+.problem-card h3 {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.3;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+.problem-card p {
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+/* SOLUTION */
+.steps-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  margin-top: 56px;
+  position: relative;
+}
+@media (max-width: 880px) { .steps-grid { grid-template-columns: 1fr; } }
+.step {
+  padding: 0 32px;
+  border-left: 1px solid var(--border);
+  position: relative;
+}
+.step:first-child { padding-left: 0; border-left: none; }
+@media (max-width: 880px) {
+  .step { padding: 24px 0; border-left: none; border-top: 1px solid var(--border); }
+  .step:first-child { border-top: none; padding-top: 0; }
+}
+.step-marker {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 56px;
+  font-weight: 300;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 24px;
+  letter-spacing: -0.02em;
+}
+.step h3 {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 12px;
+  line-height: 1.25;
+}
+.step p {
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+.step-detail {
+  list-style: none;
+  margin-top: auto;
+}
+.step-detail li {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 6px 0;
+  padding-left: 16px;
+  position: relative;
+}
+.step-detail li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  width: 6px;
+  height: 1px;
+  background: var(--border-ink);
+}
+
+/* DIFFERENTIATION TABLE */
+.diff-wrap {
+  margin-top: 56px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.diff-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+}
+.diff-table th, .diff-table td {
+  padding: 18px 24px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.diff-table tr:last-child td { border-bottom: none; }
+.diff-table th {
+  font-weight: 500;
+  font-family: var(--font-serif);
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  background: var(--surface);
+  color: var(--text-primary);
+}
+.diff-table th:first-child {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 500;
+  width: 22%;
+}
+.diff-table td:first-child {
+  font-weight: 500;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  background: var(--bg-elev);
+}
+.diff-them { color: var(--text-muted); }
+.diff-us { color: var(--text-primary); position: relative; }
+.diff-us::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent);
+}
+.diff-table th.col-us { color: var(--accent); }
+@media (max-width: 720px) {
+  .diff-table th, .diff-table td { padding: 14px 16px; font-size: 13.5px; }
+  .diff-table th:first-child, .diff-table td:first-child { font-size: 11.5px; }
+}
+
+/* USERS */
+.users-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 56px;
+}
+@media (max-width: 880px) { .users-grid { grid-template-columns: 1fr; } }
+.user-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 36px 32px;
+  position: relative;
+  transition: transform 0.3s ease, border-color 0.2s ease;
+}
+.user-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-strong);
+}
+.user-tag {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 500;
+  margin-bottom: 18px;
+}
+.user-card h3 {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.25;
+  margin-bottom: 14px;
+  letter-spacing: -0.02em;
+}
+.user-card > p {
+  font-size: 14.5px;
+  line-height: 1.65;
+  margin-bottom: 24px;
+}
+.user-card ul {
+  list-style: none;
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+}
+.user-card li {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  padding: 8px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.user-card li::before {
+  content: '↳';
+  color: var(--accent);
+  font-weight: 400;
+  flex-shrink: 0;
+}
+
+/* TRUST */
+.trust-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 32px;
+  margin-top: 56px;
+}
+@media (max-width: 880px) { .trust-grid { grid-template-columns: 1fr; } }
+.trust-item h3 {
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+.trust-item p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin-bottom: 14px;
+}
+.trust-cite {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  letter-spacing: 0;
+}
+
+/* FAQ */
+.faq {
+  margin-top: 56px;
+  border-top: 1px solid var(--border-ink);
+}
+.faq-item {
+  border-bottom: 1px solid var(--border);
+  padding: 24px 0;
+}
+.faq-item summary {
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+  position: relative;
+  padding-right: 36px;
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+}
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after {
+  content: '+';
+  position: absolute;
+  right: 8px;
+  top: 0;
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 300;
+  color: var(--accent);
+  transition: transform 0.25s ease;
+  line-height: 1.2;
+}
+.faq-item[open] summary::after { transform: rotate(45deg); }
+.faq-item p {
+  margin-top: 14px;
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  max-width: 720px;
+}
+
+/* FINAL CTA */
+.cta-section {
+  text-align: center;
+  padding: clamp(96px, 14vw, 180px) 0;
+  background: var(--ink-900);
+  color: var(--paper-100);
+  position: relative;
+  overflow: hidden;
+}
+.cta-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  pointer-events: none;
+}
+.cta-section .eyebrow {
+  color: var(--gold-500);
+}
+.cta-section .eyebrow::before {
+  background: var(--gold-500);
+}
+.cta-section h2 {
+  color: var(--paper-100);
+  max-width: 800px;
+  margin: 0 auto 28px;
+  font-weight: 400;
+}
+.cta-section h2 em {
+  font-style: italic;
+  color: var(--gold-500);
+}
+.cta-section p {
+  font-size: 1.0625rem;
+  color: oklch(85% 0.02 80 / 0.85);
+  max-width: 520px;
+  margin: 0 auto 40px;
+  line-height: 1.65;
+}
+.cta-section .btn-primary {
+  background: var(--gold-600);
+  border-color: var(--gold-600);
+  color: var(--ink-900);
+}
+.cta-section .btn-primary:hover {
+  background: var(--gold-500);
+  border-color: var(--gold-500);
+}
+.cta-section .btn-ghost {
+  color: var(--paper-100);
+  border-color: oklch(70% 0.02 80 / 0.3);
+}
+.cta-section .btn-ghost:hover {
+  border-color: var(--paper-100);
+  background: oklch(40% 0.04 250 / 0.3);
+}
+
+/* FOOTER */
+footer {
+  background: var(--bg-elev);
+  padding: 48px 0 32px;
+  border-top: 1px solid var(--border);
+}
+.footer-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 32px;
+}
+.footer-brand {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.footer-tag {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.footer-meta {
+  font-size: 12.5px;
+  color: var(--text-faint);
+  text-align: right;
+  line-height: 1.7;
+}
+@media (max-width: 640px) { .footer-meta { text-align: left; } }
+
+/* Reveal — using IntersectionObserver */
+.r {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.7s cubic-bezier(0, 0, 0.2, 1),
+              transform 0.7s cubic-bezier(0, 0, 0.2, 1);
+}
+.in .r, .r.in {
+  opacity: 1;
+  transform: translateY(0);
+}
+.r-1 { transition-delay: 0.05s; }
+.r-2 { transition-delay: 0.12s; }
+.r-3 { transition-delay: 0.19s; }
+.r-4 { transition-delay: 0.26s; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .cite { opacity: 1; transform: none; }
+  .artifact { transform: none; }
+}
+
+/* Selection */
+::selection { background: var(--accent-bg-strong); color: var(--ink-900); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a class="brand" href="#top">
+      <span class="brand-mark"></span>
+      Career Data Account
+    </a>
+    <ul class="nav-links">
+      <li><a href="#how">작동 방식</a></li>
+      <li><a href="#diff">차별화</a></li>
+      <li><a href="#users">사용자</a></li>
+      <li><a href="#trust">신뢰</a></li>
+    </ul>
+    <a href="#contact" class="btn btn-primary" style="padding: 10px 20px; font-size: 13.5px;">대학 파트너십 문의</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="top">
+  <div class="container">
+    <div class="hero-grid">
+      <div class="r">
+        <div class="eyebrow">AI 포트폴리오 코치 시스템 · v0.1</div>
+        <h1>
+          활동 목록이 아니라,<br>
+          <em>증거 있는 역량 자산</em>.
+        </h1>
+        <p class="hero-lede">
+          AI가 학생의 경험에서 역량을 발견하고, 증거와 함께 자산으로 만듭니다<span class="cite" data-tip="모든 역량 추출 결과에 원본 문서·산출물 인용이 강제로 따라붙습니다.">1</span>.
+          K-CESA 6대 핵심역량과 NCS 10대 직업기초능력에 매핑되며<span class="cite" data-tip="K-CESA(한국직업능력연구원) / NCS(한국산업인력공단) 한국 표준 역량 분류 기반.">2</span>,
+          기존 비교과 시스템과 연동됩니다.
+        </p>
+        <div class="hero-actions">
+          <a href="#contact" class="btn btn-primary">대학 파트너십 문의</a>
+          <a href="#how" class="btn btn-ghost">작동 방식 보기</a>
+        </div>
+        <div class="hero-meta">
+          <span>K-CESA 6대 역량 매핑</span>
+          <span>NCS 10대 직업기초능력</span>
+          <span>증거 기반 LLM 추출</span>
+        </div>
+      </div>
+
+      <!-- Hero artifact: Student record card -->
+      <div class="r r-2">
+        <div class="artifact">
+          <div class="artifact-stamp">Verified</div>
+          <div class="artifact-label">Record No. 2025-A-0327</div>
+          <div class="artifact-title">캡스톤 디자인 — 지역 소상공인 ERP 구축</div>
+
+          <div class="artifact-row">
+            <div class="k">기간</div>
+            <div class="v">2025.03 — 2025.06</div>
+          </div>
+          <div class="artifact-row">
+            <div class="k">역할</div>
+            <div class="v">팀장 (5인 팀, 백엔드 리드)</div>
+          </div>
+          <div class="artifact-row">
+            <div class="k">증거</div>
+            <div class="v" style="font-size: 12.5px; color: var(--text-muted);">
+              결과보고서.pdf · GitHub commits · 발표자료 §3.2
+            </div>
+          </div>
+          <div class="artifact-row">
+            <div class="k">추출 역량</div>
+            <div class="v" style="padding-top: 2px;">
+              <span class="artifact-comp">문제해결 ·82</span>
+              <span class="artifact-comp">대인관계 ·76</span>
+              <span class="artifact-comp">정보활용 ·88</span>
+            </div>
+          </div>
+
+          <div class="artifact-footer">
+            extracted-by: claude-evidence-v1 · ground-truth: 3 docs
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROOF BAR -->
+<div class="proof-bar">
+  <div class="container">
+    <div class="proof-grid r">
+      <div class="proof-label">기반 표준 &<br>1차 출처</div>
+      <div class="proof-items">
+        <div class="proof-item">
+          <div class="proof-item-label">한국 표준</div>
+          <div class="proof-item-value">K-CESA · NCS</div>
+        </div>
+        <div class="proof-item">
+          <div class="proof-item-label">학습 이론</div>
+          <div class="proof-item-value">Kolb · ICF</div>
+        </div>
+        <div class="proof-item">
+          <div class="proof-item-label">AI 평가</div>
+          <div class="proof-item-value">Evidence-Grounded LLM</div>
+        </div>
+        <div class="proof-item">
+          <div class="proof-item-label">데이터 윤리</div>
+          <div class="proof-item-value">학생 통제권 우선</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section class="section">
+  <div class="container">
+    <div class="r">
+      <div class="eyebrow">현재의 한계</div>
+      <h2 class="section-title">마일리지가 가득 찬 PDF는,<br>자소서를 쓰지 못합니다.</h2>
+      <p class="section-lede">
+        한국 대학들은 학생 비교과 시스템에 막대한 예산을 투입해왔습니다<span class="cite" data-tip="LENS·KUchive·SUCCESS·DreamPATH·WISE 등 주요 대학별 비교과 통합관리 시스템.">3</span>.
+        그런데 정작 학생들은 — 자기가 무엇을 했는지 *기록*은 하면서도,
+        그것이 *무엇을 의미하는지* 자기 말로 설명하지 못합니다.
+      </p>
+    </div>
+
+    <div class="problem-cards">
+      <div class="problem-card r">
+        <div class="problem-num">No. 1</div>
+        <h3>활동 누적의 한계</h3>
+        <p>무엇을 *했는지*는 적혀 있지만, 왜 했고 무엇을 *배웠는지*는 빈 칸. 활동 목록은 자기소개서가 아닙니다.</p>
+      </div>
+      <div class="problem-card r r-1">
+        <div class="problem-num">No. 2</div>
+        <h3>자율 입력의 의존</h3>
+        <p>학생이 적지 않으면 시스템은 *빈 박스*. AI 코치는 transcripts와 산출물에서 능동적으로 끌어냅니다.</p>
+      </div>
+      <div class="problem-card r r-2">
+        <div class="problem-num">No. 3</div>
+        <h3>역량 진단의 분리</h3>
+        <p>K-CESA·NCS 진단은 *시험으로* 측정. 실제 경험과 단절. 우리는 *경험에서* 같은 표준을 추출합니다.</p>
+      </div>
+      <div class="problem-card r r-3">
+        <div class="problem-num">No. 4</div>
+        <h3>교수 상담의 빈약함</h3>
+        <p>학생을 마주한 교수에게 주어진 자료는 학점과 마일리지 숫자뿐. 성장 *맥락*이 없습니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOLUTION — 3 STEPS -->
+<section class="section" id="how">
+  <div class="container">
+    <div class="r">
+      <div class="eyebrow">작동 방식</div>
+      <h2 class="section-title">AI가 경험에서 역량을 추출합니다.<br>단, 증거가 있을 때만.</h2>
+      <p class="section-lede">
+        Kolb의 경험학습 사이클<span class="cite" data-tip="Kolb 1984: 구체적 경험 → 반성적 관찰 → 추상적 개념화 → 능동적 실험. 우리 시스템이 자동화하는 학습 사이클.">4</span>을
+        자동화하되, 증거 grounding을 사이클 진입 게이트로 둡니다.
+        증거 없는 경험은 분석 대상이 되지 못합니다 — LLM 할루시네이션을 막는 시스템적 장치입니다.
+      </p>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step r">
+        <div class="step-marker">i.</div>
+        <h3>경험 수집</h3>
+        <p>자동 + 능동 인터뷰의 하이브리드. 학사정보·LMS·이수증명서에서 활동을 *자동으로* 수집하고, AI가 빈틈을 *발굴 인터뷰*로 보완합니다.</p>
+        <ul class="step-detail">
+          <li>transcripts · certificates · 산출물 자동 import</li>
+          <li>ICF 코칭 코어 컴피턴시 기반 인터뷰</li>
+          <li>STAR 구조로 자동 정리</li>
+        </ul>
+      </div>
+      <div class="step r r-1">
+        <div class="step-marker">ii.</div>
+        <h3>증거 grounding</h3>
+        <p>각 경험 주장에 대해 원본 문서를 매칭하고 신뢰도 점수를 부여합니다. 증거 없는 주장은 *추론 대상이 되지 않습니다*.</p>
+        <ul class="step-detail">
+          <li>주장–증거 span 자동 매칭</li>
+          <li>신뢰도 점수 (1–5)</li>
+          <li>학생이 증거 추가·제외 가능</li>
+        </ul>
+      </div>
+      <div class="step r r-2">
+        <div class="step-marker">iii.</div>
+        <h3>역량 자산화</h3>
+        <p>K-CESA·NCS 표준에 매핑된 역량 점수가 *증거 인용과 함께* 누적됩니다. 자기소개서·면접 답변은 이 자산에서 *조합*됩니다.</p>
+        <ul class="step-detail">
+          <li>K-CESA 6대 · NCS 10대 매핑</li>
+          <li>모든 점수에 원본 증거 인용</li>
+          <li>자소서·면접 시뮬레이션 자동 생성</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DIFFERENTIATION -->
+<section class="section" id="diff">
+  <div class="container">
+    <div class="r">
+      <div class="eyebrow">차별화</div>
+      <h2 class="section-title">기존 비교과 시스템 vs<br>Career Data Account.</h2>
+      <p class="section-lede">
+        기존 시스템은 학생이 입력한 *활동을 누적*합니다. 우리 시스템은 학생의 경험에서 *역량을 추출*합니다.
+        같은 데이터에서 출발하지만 산출이 다릅니다.
+      </p>
+    </div>
+
+    <div class="diff-wrap r">
+      <table class="diff-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>기존 비교과 시스템</th>
+            <th class="col-us">Career Data Account</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>데이터 입력</td>
+            <td class="diff-them">학생 자율 입력</td>
+            <td class="diff-us">자동 수집 + AI 인터뷰</td>
+          </tr>
+          <tr>
+            <td>의미 추출</td>
+            <td class="diff-them">학생 자기 진술 의존</td>
+            <td class="diff-us">AI 능동 추출 + 학생 검증</td>
+          </tr>
+          <tr>
+            <td>증거 검증</td>
+            <td class="diff-them">없음</td>
+            <td class="diff-us">모든 주장에 원본 인용</td>
+          </tr>
+          <tr>
+            <td>역량 매핑</td>
+            <td class="diff-them">K-CESA 진단 시험 (분리)</td>
+            <td class="diff-us">경험에서 K-CESA·NCS 자동 매핑</td>
+          </tr>
+          <tr>
+            <td>주요 인센티브</td>
+            <td class="diff-them">마일리지·장학금 (외적)</td>
+            <td class="diff-us">자기 이해·취업 준비 (내적)</td>
+          </tr>
+          <tr>
+            <td>산출물</td>
+            <td class="diff-them">활동 목록 PDF</td>
+            <td class="diff-us">증거 인용된 역량 자소서·CV</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- USERS -->
+<section class="section" id="users">
+  <div class="container">
+    <div class="r">
+      <div class="eyebrow">사용자</div>
+      <h2 class="section-title">세 가지 역할,<br>하나의 데이터 자산.</h2>
+      <p class="section-lede">
+        같은 학생 데이터가 *각 역할이 결정을 내릴 때 필요한 형태로* 변환됩니다.
+        학생은 강점을 얻고, 교수는 맥락을 얻고, 대학은 성과 데이터를 얻습니다.
+      </p>
+    </div>
+
+    <div class="users-grid">
+      <div class="user-card r">
+        <div class="user-tag">For Students</div>
+        <h3>경험을<br>증거 있는 자산으로.</h3>
+        <p>당신이 한 모든 일에는 증거가 있습니다. AI 코치가 그것을 찾아내고, 자기소개서에 쓸 수 있는 *역량의 언어*로 번역합니다.</p>
+        <ul>
+          <li>AI 발굴 인터뷰로 강점 발견</li>
+          <li>증거 인용된 자소서 자동 생성</li>
+          <li>K-CESA·NCS 매핑된 역량 카드</li>
+          <li>면접 예상 질문 + 답변 가이드</li>
+        </ul>
+      </div>
+      <div class="user-card r r-1">
+        <div class="user-tag">For Professors</div>
+        <h3>학점이 아닌,<br>성장의 맥락.</h3>
+        <p>학생의 *지난 6개월*이 한 화면에 들어옵니다. 어떤 경험에서 어떤 역량이 자랐는지, 다음 단계로 무엇이 필요한지가 데이터로.</p>
+        <ul>
+          <li>학생 성장 맥락 자동 요약</li>
+          <li>역량 갭 기반 상담 자료</li>
+          <li>비교과 활동 효과 추적</li>
+          <li>학생 동의 기반 열람 권한</li>
+        </ul>
+      </div>
+      <div class="user-card r r-2">
+        <div class="user-tag">For Administrators</div>
+        <h3>입학에서 졸업까지,<br>역량 데이터로.</h3>
+        <p>대학의 *어떤 인재가 자라고 있는지* 집계 통계로 확인합니다. 비교과 프로그램의 실제 효과를 K-CESA·NCS 기준으로 측정합니다.</p>
+        <ul>
+          <li>학생 역량 코호트 분석</li>
+          <li>비교과 프로그램 ROI 측정</li>
+          <li>대학 핵심역량 체계 자동 진단</li>
+          <li>LMS·비교과 시스템 연동</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST -->
+<section class="section" id="trust">
+  <div class="container">
+    <div class="r">
+      <div class="eyebrow">신뢰의 토대</div>
+      <h2 class="section-title">근거 없이 만들어진<br>역량 점수를 믿어선 안 됩니다.</h2>
+      <p class="section-lede">
+        모든 결정은 1차 출처와 검증된 표준에서 출발합니다.
+        AI가 추출한 모든 역량에는 원본 증거가 인용됩니다 — 학생이 확인하고, 교수가 검토하고, 대학이 감사할 수 있습니다.
+      </p>
+    </div>
+
+    <div class="trust-grid">
+      <div class="trust-item r">
+        <h3>한국 표준 기반</h3>
+        <p>K-CESA 6대 핵심역량과 NCS 10대 직업기초능력에 직접 매핑됩니다. 기존 대학 진단 결과와 연속성을 유지합니다.</p>
+        <div class="trust-cite">한국직업능력연구원 · 한국산업인력공단</div>
+      </div>
+      <div class="trust-item r r-1">
+        <h3>증거 기반 추출</h3>
+        <p>LLM의 모든 주장에 원본 텍스트 span 인용을 강제합니다. 증거가 없으면 점수도 없습니다. 할루시네이션을 시스템적으로 차단합니다.</p>
+        <div class="trust-cite">ED-LLM arXiv:2502.18823 · Evidence-Extraction Metrics arXiv:2601.02627</div>
+      </div>
+      <div class="trust-item r r-2">
+        <h3>학생 데이터 통제권</h3>
+        <p>학생 데이터는 학생의 것입니다. 모든 추론은 삭제 가능하고, 모든 증거는 제외 가능하며, 대학 관리자도 집계 통계 외엔 접근 불가입니다.</p>
+        <div class="trust-cite">학생 동의 기반 열람 · GDPR-style 데이터 권리</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section">
+  <div class="container">
+    <div class="r" style="max-width: 720px;">
+      <div class="eyebrow">자주 묻는 질문</div>
+      <h2 class="section-title">결정 전, 짚어두실 것.</h2>
+    </div>
+
+    <div class="faq" style="max-width: 820px;">
+      <details class="faq-item r">
+        <summary>기존 비교과 시스템(LENS·KUchive 등)과 데이터 연동 가능한가요?</summary>
+        <p>네. 표준 API와 CSV import 모두 지원합니다. 기존 마일리지·활동 기록은 그대로 보존하면서, 그 위에 *증거 grounding과 역량 추출 층*을 얹는 구조입니다. 대학의 기존 데이터 자산을 폐기하지 않습니다.</p>
+      </details>
+      <details class="faq-item r r-1">
+        <summary>AI가 역량을 잘못 분석하면 어떻게 됩니까?</summary>
+        <p>모든 역량 추출에는 원본 문서 인용이 따라붙고, 학생이 확인·수정할 수 있습니다. AI는 *후보 가설*을 제시할 뿐 최종 권한은 학생에게 있습니다. 추가로 교수·대학 관리자는 별도 검토 권한을 가집니다.</p>
+      </details>
+      <details class="faq-item r r-2">
+        <summary>학생 개인정보는 어떻게 보호됩니까?</summary>
+        <p>학생은 자기 데이터의 모든 추론을 삭제할 수 있고, 특정 증거를 분석에서 제외할 수 있습니다. 대학 관리자도 *개별 학생의 추론*에는 학생 동의 없이 접근할 수 없으며, *집계 통계*만 열람 가능합니다.</p>
+      </details>
+      <details class="faq-item r r-3">
+        <summary>도입에는 얼마나 걸립니까?</summary>
+        <p>파일럿 단위(1개 학과·1개 학기)로 약 6–8주. 전사 도입은 데이터 연동 범위에 따라 3–6개월. 대학별 핵심역량 체계와의 매핑은 별도 정의 워크숍을 거칩니다.</p>
+      </details>
+      <details class="faq-item r r-4">
+        <summary>K-CESA 진단 검사와 어떻게 다릅니까?</summary>
+        <p>K-CESA는 *시험*으로 측정하는 진단 도구입니다. 우리 시스템은 *학생의 실제 경험에서* 같은 6대 역량을 추출합니다. 두 데이터는 상호 보완적입니다 — K-CESA 점수와 경험 기반 점수의 *갭이 그 자체로 의미 있는 신호*입니다.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="cta-section" id="contact">
+  <div class="container">
+    <div class="r">
+      <div class="eyebrow">파트너십 문의</div>
+      <h2>
+        당신의 대학에는<br>
+        <em>어떤 인재가 자라고 있는지</em><br>
+        알 수 있어야 합니다.
+      </h2>
+      <p>
+        파일럿 도입 가능 학과·예상 학생 수·기존 시스템 정보를 알려주시면,
+        담당자가 14일 이내 협의안과 함께 연락드립니다.
+      </p>
+      <div style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;">
+        <a href="mailto:partnership@example.kr?subject=Career Data Account 파트너십 문의" class="btn btn-primary">대학 파트너십 문의</a>
+        <a href="#" class="btn btn-ghost">학생 베타 신청 →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div>
+        <div class="footer-brand">Career Data Account</div>
+        <div class="footer-tag">활동 목록이 아니라, 증거 있는 역량 자산.</div>
+      </div>
+      <div class="footer-meta">
+        © 2026 Career Data Account.<br>
+        AI 포트폴리오 코치 시스템 · v0.1
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Reveal on scroll — single system (IO)
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('in');
+      io.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.r').forEach(el => io.observe(el));
+
+// Citation marker reveal — staggered after parent reveals
+const citeIo = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const cites = e.target.querySelectorAll('.cite');
+      cites.forEach((c, i) => {
+        setTimeout(() => c.classList.add('in'), 200 + i * 100);
+      });
+      citeIo.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.3 });
+
+document.querySelectorAll('.hero-lede, .section-lede').forEach(el => citeIo.observe(el));
+</script>
+
+</body>
+</html>
