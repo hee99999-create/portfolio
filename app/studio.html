@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>문서 만들기 — Career Data Account</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.doc { background:#fff; border:1px solid var(--hairline); border-radius:var(--r-card); padding:var(--s-5); max-width:760px; margin:0 auto; }
+.doc h1.doc-t { font-size:1.9rem; }
+.doc-section { margin-top:var(--s-4); }
+.doc-section h3 { border-bottom:2px solid var(--ink); padding-bottom:6px; margin-bottom:12px; }
+.res-row { display:grid; grid-template-columns:120px 1fr; gap:14px; padding:10px 0; border-bottom:1px solid var(--pearl-ring); }
+.res-date { color:var(--ink-faint); font-size:14px; }
+.pf-item { padding:var(--s-3) 0; border-bottom:1px solid var(--pearl-ring); }
+.doc p { line-height:1.8; margin-top:10px; }
+@media print {
+  .nav,.subnav,.sticky-bar,.no-print,[data-footer]{ display:none !important; }
+  body{ background:#fff; } .doc{ border:none; max-width:100%; padding:0; }
+  .tile{ padding:0; background:#fff; }
+}
+</style>
+</head>
+<body>
+<nav class="nav" data-nav></nav>
+
+<div class="subnav no-print">
+  <span class="subnav__title">문서 만들기</span>
+  <div class="seg" style="margin-left:16px">
+    <button id="tSelf" class="on" onclick="switchDoc('self')">자기소개서</button>
+    <button id="tResume" onclick="switchDoc('resume')">이력서</button>
+    <button id="tPortfolio" onclick="switchDoc('portfolio')">포트폴리오</button>
+  </div>
+  <span class="subnav__spacer"></span>
+  <span class="caption" id="metaCount"></span>
+</div>
+
+<!-- 자기소개서: 문항 선택 -->
+<section class="tile tile--white compact no-print" id="selfControls">
+  <div class="container">
+    <p class="caption">자기소개서 · 문항 선택</p>
+    <div class="btn-row mt-2" id="topicChips"></div>
+  </div>
+</section>
+
+<section class="tile tile--parchment" style="min-height:50vh">
+  <div class="container">
+    <div id="docEmpty" class="empty hidden"><h3 class="faint">경력을 먼저 등록하면 문서가 만들어집니다</h3>
+      <div class="btn-row mt-3" style="justify-content:center"><a class="btn btn--primary" href="dashboard.html">경력관리로</a></div></div>
+    <div id="docBody"></div>
+  </div>
+</section>
+
+<div class="sticky-bar no-print">
+  <span class="caption" id="counts">문장 0 · 인용 0</span>
+  <span class="sticky-bar__spacer"></span>
+  <button class="btn btn--ghost" onclick="window.print()">PDF로 출력</button>
+  <button class="btn btn--primary" id="copyBtn" onclick="copyDoc()">복사</button>
+</div>
+
+<script src="app.js"></script>
+<script>
+mountNav('studio');
+if (requireAuth()) {
+  Store.seedIfEmpty();
+  const items = Store.items;
+  const user = Session.user || { name: '학생' };
+  let cur = 'self', curTopic = null;
+  const $ = s => document.getElementById(s);
+  $('metaCount').textContent = `재료 ${items.length}건`;
+
+  const reflection = (() => { try { return JSON.parse(localStorage.getItem('cda_reflection')) || []; } catch { return []; } })();
+  const allEvidence = items.flatMap(x => x.competencies.map(c => ({ ...c, from: x.title })));
+
+  function citeSpan(n, ev) { return `<span class="cite">[${n}]<span class="cite__tip">${ev.evidence}<span class="src">${ev.src} · ${ev.from || ''}</span></span></span>`; }
+
+  const TOPICS = {
+    growth: { label: '성장 과정', build: () => [
+      { t: `저는 경험을 근거로 성장하는 사람입니다.`, ev: allEvidence[0] },
+      allEvidence[1] ? { t: `${allEvidence[1].evidence} 경험은 그 태도를 보여줍니다.`, ev: allEvidence[1] } : { fill: '가장 의미 있었던 성장 경험' },
+      { fill: '이 성장이 지원 직무와 이어지는 지점' },
+    ]},
+    strength: { label: '강점과 역량', build: () => {
+      const top = items.flatMap(x=>x.competencies).slice(0,2);
+      return [
+        top[0] ? { t: `저의 대표 역량은 ${top[0].name}입니다.`, ev: top[0] } : { fill: '대표 역량' },
+        top[1] ? { t: `또한 ${top[1].evidence}는 경험으로 ${top[1].name}을 길렀습니다.`, ev: top[1] } : { fill: '두 번째 역량' },
+      ];
+    }},
+    challenge: { label: '도전과 극복', build: () => [
+      reflection[1] ? { t: `“${reflection[1]}”`, ev: { evidence: reflection[1], src: '성찰록', from:'AI 코칭' } } : { t: `한계에 부딪혔을 때 저는 근거로 판단했습니다.`, ev: allEvidence[0] },
+      { fill: '구체적으로 극복한 방법과 결과' },
+    ]},
+  };
+
+  function switchDoc(d) {
+    cur = d;
+    ['self','resume','portfolio'].forEach(k => $('t'+k.charAt(0).toUpperCase()+k.slice(1)).classList.toggle('on', k===d));
+    $('selfControls').classList.toggle('hidden', d!=='self');
+    $('copyBtn').style.display = d==='self' ? '' : 'none';
+    if (items.length === 0) { $('docEmpty').classList.remove('hidden'); $('docBody').innerHTML=''; return; }
+    $('docEmpty').classList.add('hidden');
+    if (d==='self') renderSelf();
+    else if (d==='resume') renderResume();
+    else renderPortfolio();
+  }
+  window.switchDoc = switchDoc;
+
+  /* 자기소개서 */
+  function renderSelf() {
+    $('topicChips').innerHTML = Object.entries(TOPICS).map(([k,v]) =>
+      `<button class="chip chip--selectable ${curTopic===k?'chip--selected':''}" onclick="pickTopic('${k}')">${v.label}</button>`).join('');
+    if (!curTopic) { $('docBody').innerHTML = '<p class="muted center mt-6">위에서 문항을 선택하세요.</p>'; $('counts').textContent='문장 0 · 인용 0'; return; }
+    const parts = TOPICS[curTopic].build();
+    let n=0, cites=0, plain=[];
+    const html = parts.map(p => {
+      if (p.fill) return `<p><span class="essay-fill">[직접 채우기: ${p.fill}]</span></p>`;
+      if (!p.ev) return '';
+      n++; cites++; plain.push(p.t);
+      return `<p class="fade-up">${p.t} ${citeSpan(cites, p.ev)}</p>`;
+    }).join('');
+    $('docBody').innerHTML = `<div class="doc"><p class="caption">자기소개서 — ${TOPICS[curTopic].label}</p><h1 class="doc-t serif">${user.name}</h1>${html}</div>`;
+    $('counts').textContent = `문장 ${n} · 인용 ${cites}`;
+    window._copyText = plain.join(' ');
+  }
+  window.pickTopic = k => { curTopic = k; renderSelf(); };
+
+  /* 이력서 */
+  function renderResume() {
+    const byCat = {};
+    items.forEach(x => { (byCat[x.category] = byCat[x.category] || []).push(x); });
+    const topComp = Object.entries(items.flatMap(x=>x.competencies).reduce((m,c)=>{m[c.name]=(m[c.name]||0)+1;return m;},{}))
+      .sort((a,b)=>b[1]-a[1]).slice(0,4).map(([n])=>n);
+    const sections = CATEGORIES.filter(c=>byCat[c.key]).map(c => `
+      <div class="doc-section"><h3>${c.label}</h3>
+      ${byCat[c.key].map(x=>`<div class="res-row"><div class="res-date">${x.date}</div>
+        <div><strong>${x.title}</strong>${x.org?` <span class="caption">· ${x.org}</span>`:''}
+        <div class="exp-card__chips mt-1">${x.competencies.map(cc=>`<span class="comp-chip">${cc.name}</span>`).join('')}</div></div></div>`).join('')}
+      </div>`).join('');
+    $('docBody').innerHTML = `<div class="doc">
+      <h1 class="doc-t serif">${user.name}</h1>
+      <p class="muted">${user.email||''}</p>
+      <div class="doc-section"><h3>핵심 역량</h3><div class="exp-card__chips">${topComp.map(n=>`<span class="comp-chip">${n}</span>`).join('')}</div></div>
+      ${sections}
+      <p class="fine mt-4">본 이력서의 모든 항목은 증빙자료에 근거합니다. (총 ${items.length}건)</p></div>`;
+    $('counts').textContent = `경력 ${items.length}건 · 역량 ${topComp.length}`;
+    window._copyText = user.name + ' 이력서';
+  }
+
+  /* 포트폴리오 */
+  function renderPortfolio() {
+    let c = 0;
+    const body = items.map(x => {
+      const chips = x.competencies.map(cc => { c++; return `<span class="comp-chip">${cc.name} ${citeSpan(c, {...cc, from:x.title})}</span>`; }).join('');
+      return `<div class="pf-item"><span class="exp-tag" style="font-size:11px;color:var(--color-primary);background:var(--accent-tint);padding:3px 10px;border-radius:999px">${CAT[x.category]?.label}</span>
+        <h3 style="margin-top:8px">${x.title}</h3>
+        <p class="caption">${x.date}${x.org?` · ${x.org}`:''} · 등록번호 ${x.id}</p>
+        <p>${x.star.a}</p>
+        <div class="exp-card__chips mt-2">${chips}</div></div>`;
+    }).join('');
+    $('docBody').innerHTML = `<div class="doc"><p class="caption">포트폴리오</p><h1 class="doc-t serif">${user.name}의 역량 자산</h1>
+      <p class="muted mt-1">증거로 검증된 ${items.length}개의 경험.</p>${body}</div>`;
+    $('counts').textContent = `경험 ${items.length}건 · 인용 ${c}`;
+    window._copyText = user.name + ' 포트폴리오';
+  }
+
+  window.copyDoc = () => navigator.clipboard?.writeText(window._copyText||'').then(()=>{
+    const b=$('copyBtn'); b.textContent='복사됨 ✓'; setTimeout(()=>b.textContent='복사',1500);
+  });
+
+  switchDoc('self');
+}
+</script>
+</body>
+</html>

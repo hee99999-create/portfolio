@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>미리보기 — Career Data Account</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav class="nav" data-nav></nav>
+
+<section class="tile tile--white compact">
+  <div class="container prose">
+    <p class="caption">미리보기</p>
+    <h1>로그인 없이 둘러보기</h1>
+    <p class="lead mt-2">실제 경력 카드가 이렇게 보입니다. <span class="caption">[N]에 마우스를 올려보세요.</span></p>
+  </div>
+</section>
+
+<section class="tile tile--parchment">
+  <div class="container card-grid" id="previewGrid"></div>
+</section>
+
+<section class="tile tile--white center">
+  <div class="container prose" style="margin:0 auto">
+    <h2>당신의 경험으로 만들어보세요</h2>
+    <div class="btn-row mt-3" style="justify-content:center"><a class="btn btn--primary btn--hero" href="login.html">직접 해보기</a></div>
+  </div>
+</section>
+
+<footer class="footer" data-footer></footer>
+<script src="app.js"></script>
+<script>
+mountNav('preview'); mountFooter();
+document.getElementById('previewGrid').innerHTML = SEED.map(x => {
+  const chips = x.competencies.map((c, j) => `<span class="comp-chip">${c.name}
+    <span class="cite">[${j+1}]<span class="cite__tip">${c.evidence}<span class="src">${c.src}</span></span></span></span>`).join('');
+  return `<div class="exp-card" style="cursor:default">
+    <div class="exp-card__reg">${CAT[x.category]?.label || '경험'} · ${x.id}</div>
+    <div class="exp-card__title">${x.title}</div>
+    <div class="exp-card__meta">${x.date}${x.org?' · '+x.org:''}</div>
+    <div class="exp-card__chips">${chips}</div>
+    <div class="exp-card__foot"><span>증거 ${x.competencies.length}건</span><span class="link">미리보기</span></div></div>`;
+}).join('');
+</script>
+</body>
+</html>

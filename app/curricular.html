@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>교과역량 — Career Data Account</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+table.tx { width:100%; border-collapse:collapse; }
+table.tx th, table.tx td { padding:8px; border-bottom:1px solid var(--hairline); text-align:left; font-size:14px; }
+table.tx th { font-size:12px; color:var(--ink-faint); font-weight:600; }
+table.tx input, table.tx select { width:100%; border:1px solid var(--hairline); border-radius:8px; padding:7px 9px; font-family:inherit; font-size:14px; background:#fff; }
+.res-bar-row { display:grid; grid-template-columns:150px 1fr 46px; align-items:center; gap:12px; margin-top:12px; }
+.res-track { background:var(--pearl-ring); border-radius:var(--r-pill); height:12px; }
+.res-fill { height:12px; border-radius:var(--r-pill); background:var(--color-primary); }
+.seg { display:inline-flex; background:var(--surface-parchment); border-radius:var(--r-pill); padding:3px; }
+.seg button { border:none; background:transparent; padding:8px 16px; border-radius:var(--r-pill); font-size:14px; color:var(--ink-soft); }
+.seg button.on { background:#fff; color:var(--color-primary); font-weight:600; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+</style>
+</head>
+<body>
+<nav class="nav" data-nav></nav>
+
+<div class="subnav">
+  <span class="subnav__title">교과역량</span>
+  <span class="caption" style="margin-left:12px">성적 기반 역량 분석</span>
+  <span class="subnav__spacer"></span>
+  <a class="link" href="competency.html">역량 그래프 ›</a>
+</div>
+
+<section class="tile tile--white compact">
+  <div class="container">
+    <h2>이수한 교과의 역량</h2>
+    <p class="muted mt-1">성적을 입력하거나 성적증명서를 첨부하면, 교과 활동에서 드러난 K-CESA 역량을 분석합니다.</p>
+    <div class="seg mt-3">
+      <button id="tabInput" class="on" onclick="setMode('input')">성적 직접 입력</button>
+      <button id="tabFile" onclick="setMode('file')">성적증명서 첨부</button>
+    </div>
+  </div>
+</section>
+
+<section class="tile tile--parchment">
+  <div class="container">
+    <!-- 직접 입력 -->
+    <div id="modeInput">
+      <div class="card">
+        <div class="flex between items-center">
+          <h3>수강 과목</h3>
+          <div class="btn-row"><button class="chip chip--selectable" onclick="fillSample()">예시 채우기</button>
+            <button class="chip chip--selectable" onclick="addRow()">+ 행 추가</button></div>
+        </div>
+        <div style="overflow-x:auto" class="mt-2">
+          <table class="tx">
+            <thead><tr><th style="width:34%">과목명</th><th style="width:22%">이수구분</th><th style="width:14%">학점</th><th style="width:18%">성적</th><th></th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 파일 첨부 -->
+    <div id="modeFile" class="hidden">
+      <div class="card center" style="padding:var(--s-6)">
+        <h3>성적증명서 첨부</h3>
+        <p class="muted mt-1">PDF 또는 이미지. 첨부하면 과목·성적을 인식해 분석합니다.</p>
+        <input type="file" id="txFile" accept=".pdf,image/*" style="display:none" onchange="onFile()">
+        <div class="btn-row mt-3" style="justify-content:center"><button class="btn btn--dark" onclick="document.getElementById('txFile').click()">⬆ 파일 추가</button></div>
+        <p class="caption mt-2" id="fileName"></p>
+      </div>
+    </div>
+
+    <div class="btn-row mt-4"><button class="btn btn--primary" id="analyzeBtn" onclick="analyze()">역량 분석</button>
+      <span class="caption" id="hint">과목을 입력한 뒤 분석을 누르세요.</span></div>
+
+    <!-- 결과 -->
+    <div id="result" class="hidden mt-5">
+      <div class="card">
+        <div class="flex between items-center"><h3>교과역량 분석 결과</h3><span class="caption">K-CESA · 0–100</span></div>
+        <div id="bars" class="mt-3"></div>
+        <div class="btn-row mt-4">
+          <a class="btn btn--primary" href="competency.html">통합 역량 그래프 보기 ›</a>
+          <button class="btn btn--ghost" onclick="Curricular.clear();location.reload()">분석 초기화</button>
+        </div>
+        <p class="fine mt-2">이 결과는 비교과(경력관리) 역량과 합산되어 역량 그래프에 반영됩니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer" data-footer></footer>
+
+<script src="app.js"></script>
+<script>
+mountNav('competency'); mountFooter();
+let mode = 'input';
+const DIVISIONS = ['전공필수', '전공선택', '교양', '일반선택'];
+const GRADES = ['A+','A0','B+','B0','C+','C0','D+','D0','F'];
+
+if (requireAuth()) {
+  // 기존 분석 있으면 표시
+  const existing = Curricular.data;
+  if (existing) { renderResult(existing.scores); }
+  if (existing && existing.courses && existing.courses.length) { existing.courses.forEach(c => addRow(c)); }
+  else { addRow(); addRow(); }
+}
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('tabInput').classList.toggle('on', m === 'input');
+  document.getElementById('tabFile').classList.toggle('on', m === 'file');
+  document.getElementById('modeInput').classList.toggle('hidden', m !== 'input');
+  document.getElementById('modeFile').classList.toggle('hidden', m !== 'file');
+}
+function addRow(c) {
+  const tb = document.getElementById('rows');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input class="c-name" placeholder="예: 자료구조" value="${c?.name || ''}"></td>
+    <td><select class="c-div">${DIVISIONS.map(d => `<option ${c?.division === d ? 'selected' : ''}>${d}</option>`).join('')}</select></td>
+    <td><input class="c-cr" type="number" min="1" max="6" value="${c?.credit || 3}"></td>
+    <td><select class="c-gr">${GRADES.map(g => `<option ${c?.grade === g ? 'selected' : ''}>${g}</option>`).join('')}</select></td>
+    <td><button class="chip" onclick="this.closest('tr').remove()">×</button></td>`;
+  tb.appendChild(tr);
+}
+function fillSample() { document.getElementById('rows').innerHTML = ''; SAMPLE_COURSES.forEach(c => addRow(c)); }
+function onFile() {
+  const f = document.getElementById('txFile').files[0];
+  document.getElementById('fileName').textContent = f ? (f.name + ' — 예시 과목으로 인식됨') : '';
+}
+function collectCourses() {
+  if (mode === 'file') return SAMPLE_COURSES.slice(); // mock: 파일 → 예시 과목
+  return Array.from(document.querySelectorAll('#rows tr')).map(tr => ({
+    name: tr.querySelector('.c-name').value.trim() || '과목',
+    division: tr.querySelector('.c-div').value,
+    credit: tr.querySelector('.c-cr').value,
+    grade: tr.querySelector('.c-gr').value,
+  })).filter(c => c.name);
+}
+function analyze() {
+  const courses = collectCourses();
+  if (courses.length === 0) { document.getElementById('hint').textContent = '과목을 1개 이상 입력하세요.'; return; }
+  const scores = analyzeTranscript(courses);
+  Curricular.data = { courses, scores, at: '2025' };
+  renderResult(scores);
+  document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+}
+function renderResult(scores) {
+  const max = Math.max(100, ...KCESA.map(k => scores[k] || 0));
+  document.getElementById('bars').innerHTML = KCESA.map(k => {
+    const v = Math.min(100, Math.round(scores[k] || 0));
+    return `<div class="res-bar-row"><span class="fine">${k}</span>
+      <span class="res-track"><span class="res-fill" style="width:${v}%"></span></span>
+      <span class="fine">${v}</span></div>`;
+  }).join('');
+  document.getElementById('result').classList.remove('hidden');
+}
+</script>
+</body>
+</html>

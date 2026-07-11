@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관리자 — Career Data Account</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.bar-row { display:grid; grid-template-columns:130px 1fr 48px; align-items:center; gap:12px; margin-top:12px; }
+.bar { height:12px; border-radius:var(--r-pill); background:var(--color-primary); }
+.bar-track { background:var(--pearl-ring); border-radius:var(--r-pill); }
+</style>
+</head>
+<body>
+<nav class="nav" data-nav></nav>
+
+<div class="subnav">
+  <span class="subnav__title">관리자 통계</span>
+  <span class="subnav__spacer"></span>
+  <span class="caption">집계만 · 개별 학생 추론 접근 불가 · role: admin</span>
+</div>
+
+<section class="tile tile--white compact">
+  <div class="container">
+    <h2>코호트 역량 분포</h2>
+    <p class="muted mt-1">개인이 아니라 집단의 경향을 봅니다. K-CESA·NCS 매핑 리포트.</p>
+    <div class="stat-row mt-4">
+      <div><div class="stat__num">1,284</div><div class="stat__label">등록 학생</div></div>
+      <div><div class="stat__num">8,910</div><div class="stat__label">누적 경험</div></div>
+      <div><div class="stat__num">31,552</div><div class="stat__label">증거 인용</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="tile tile--parchment">
+  <div class="container prose">
+    <h3>역량별 보유 비율 (NCS 직업기초능력)</h3>
+    <div id="bars" class="mt-3"></div>
+    <p class="fine mt-4">※ 모든 수치는 익명 집계입니다. 개별 학생의 추론·열람은 이 화면에서 불가능합니다.</p>
+  </div>
+</section>
+
+<footer class="footer" data-footer></footer>
+<script src="app.js"></script>
+<script>
+mountNav('dashboard'); mountFooter();
+const dist = [
+  ['의사소통능력', 78], ['문제해결능력', 71], ['대인관계능력', 64],
+  ['자기개발능력', 59], ['종합적사고력', 47], ['자원정보기술활용', 38],
+];
+document.getElementById('bars').innerHTML = dist.map(([n,v]) => `
+  <div class="bar-row"><span class="fine">${n}</span>
+    <span class="bar-track"><span class="bar" style="width:${v}%"></span></span>
+    <span class="fine">${v}%</span></div>`).join('');
+</script>
+</body>
+</html>

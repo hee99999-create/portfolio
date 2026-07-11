@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>경험 상세 — Career Data Account</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav class="nav" data-nav></nav>
+
+<div class="subnav">
+  <a class="link" href="dashboard.html">‹ 경력관리</a>
+  <span class="subnav__spacer"></span>
+  <span class="caption" id="regNo"></span>
+</div>
+
+<section class="tile tile--white compact">
+  <div class="container prose">
+    <p class="caption" id="catLabel"></p>
+    <h1 id="cardTitle" style="font-size:clamp(1.7rem,3.3vw,2.5rem)"></h1>
+    <p class="muted mt-2" id="cardMeta"></p>
+    <p class="mt-2" id="proofRow"></p>
+  </div>
+</section>
+
+<section class="tile tile--parchment">
+  <div class="container prose">
+    <h3>STAR 분해</h3>
+    <div class="star-grid mt-3">
+      <div class="star-cell"><h4>Situation</h4><p id="starS"></p></div>
+      <div class="star-cell"><h4>Task</h4><p id="starT"></p></div>
+      <div class="star-cell"><h4>Action</h4><p id="starA"></p></div>
+      <div class="star-cell"><h4>Result</h4><p id="starR"></p></div>
+    </div>
+  </div>
+</section>
+
+<section class="tile tile--white">
+  <div class="container prose">
+    <h3>추출된 K-CESA 역량 <span class="caption">— 모든 역량엔 증거가 있습니다</span></h3>
+    <div id="compList" class="mt-3"></div>
+  </div>
+</section>
+
+<section class="tile tile--dark">
+  <div class="container prose">
+    <h3>이 경험, 더 깊이 성찰해볼까요?</h3>
+    <p class="mt-1">AI 코치와 대화하면 증거가 보강되고, 자기소개서의 재료가 됩니다.</p>
+    <div class="btn-row mt-3">
+      <a class="btn btn--onDark" href="coaching.html">성찰 대화 시작 ›</a>
+      <a class="btn" style="background:transparent;color:var(--color-link-dark);box-shadow:inset 0 0 0 1px var(--color-link-dark)" href="studio.html">문서 만들기 ›</a>
+    </div>
+  </div>
+</section>
+
+<footer class="footer" data-footer></footer>
+
+<script src="app.js"></script>
+<script>
+mountNav('dashboard'); mountFooter();
+if (requireAuth()) {
+  Store.seedIfEmpty();
+  const id = new URLSearchParams(location.search).get('id');
+  const x = Store.find(id) || Store.items[0];
+  if (!x) { location.href = 'dashboard.html'; }
+  else {
+    const $ = s => document.getElementById(s);
+    $('regNo').textContent = '등록번호 ' + x.id;
+    $('catLabel').textContent = CAT[x.category]?.label || '경험';
+    $('cardTitle').textContent = x.title;
+    $('cardMeta').textContent = [x.date, x.org].filter(Boolean).join(' · ');
+    $('proofRow').innerHTML = x.source === 'link'
+      ? `<a class="link link--chevron" href="${x.url}" target="_blank" rel="noopener">${x.url}</a>`
+      : (x.files.length ? '📎 증빙자료: ' + x.files.join(', ') : '증빙자료 첨부됨');
+    $('starS').textContent = x.star.s; $('starT').textContent = x.star.t;
+    $('starA').textContent = x.star.a; $('starR').textContent = x.star.r;
+    $('compList').innerHTML = x.competencies.map((c, i) => `
+      <div class="card mt-2">
+        <div class="flex between items-center">
+          <div><strong>${c.name}</strong> <span class="caption">K-CESA · 기여도 ${c.pct}%</span></div>
+          <span class="comp-chip">신뢰도 ${c.confidence}/5</span>
+        </div>
+        <p class="mt-2" style="color:var(--ink-soft)">“${c.evidence}”
+          <span class="cite">[${i + 1}]<span class="cite__tip">${c.evidence}<span class="src">${c.src}</span></span></span></p>
+        <p class="fine mt-1">출처: ${c.src}</p>
+      </div>`).join('');
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 코칭 — Career Data Account</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav class="nav" data-nav></nav>
+
+<div class="subnav">
+  <a class="link" href="card-detail.html">‹ 경험으로</a>
+  <span class="subnav__title" style="margin-left:12px">성찰 대화</span>
+  <span class="subnav__spacer"></span>
+  <span class="caption">답변은 증거로 저장됩니다</span>
+</div>
+
+<section class="tile tile--white">
+  <div class="container prose">
+    <p class="caption">AI 코칭 — 문답록</p>
+    <h1 style="font-size:clamp(1.8rem,3.5vw,2.5rem)">가설을 세우고, 버려본 순간에 대해</h1>
+    <p class="lead mt-2">말풍선 없이, 기록으로 남깁니다. 좋은 질문에 대한 당신의 답이 곧 역량의 증거가 됩니다.</p>
+
+    <div id="log" class="mt-6"></div>
+
+    <div id="answerBox" class="mt-4">
+      <label class="label" id="curQ">답변을 적어주세요</label>
+      <textarea class="field field--area" id="answerInput" rows="3" placeholder="구체적인 사실과 예시로…"></textarea>
+      <div class="btn-row mt-2">
+        <button class="btn btn--primary" onclick="submitAnswer()">답변 저장</button>
+        <button class="btn btn--ghost" onclick="nextQuestion(true)">건너뛰기</button>
+      </div>
+    </div>
+
+    <div id="done" class="pearl hidden mt-4">
+      <h3>성찰록이 저장되었습니다</h3>
+      <p class="mt-1 muted">이 답변들은 자소서 초안의 재료로 인용됩니다.</p>
+      <div class="btn-row mt-3"><a class="btn btn--primary" href="essay.html">자소서 초안 만들기 ›</a></div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer" data-footer></footer>
+<script src="app.js"></script>
+<script>
+mountNav('dashboard'); mountFooter();
+if (requireAuth()) {
+  const QUESTIONS = [
+    { q: '그 프로젝트에서 처음 세웠던 가설은 무엇이었나요?', coach: '사실 위주로 — 무엇을 믿고 시작했는지.' },
+    { q: '그 가설이 틀렸다는 걸 언제, 어떻게 알게 됐나요?', coach: '증거가 될 구체적 사건을 떠올려보세요.' },
+    { q: '그 다음, 무엇을 다르게 했나요?', coach: '행동의 변화가 역량의 근거입니다.' },
+  ];
+  let idx = 0;
+  const answers = [];
+  const log = document.getElementById('log');
+  const $ = s => document.getElementById(s);
+
+  function showQuestion() {
+    if (idx >= QUESTIONS.length) { finish(); return; }
+    $('curQ').textContent = QUESTIONS[idx].q;
+    $('answerInput').value = '';
+    $('answerInput').placeholder = QUESTIONS[idx].coach;
+    $('answerInput').focus();
+  }
+  window.submitAnswer = function () {
+    const a = $('answerInput').value.trim();
+    if (!a) { nextQuestion(true); return; }
+    answers.push(a);
+    appendLog(QUESTIONS[idx].q, a);
+    idx++; showQuestion();
+  };
+  window.nextQuestion = function (skip) {
+    if (skip) appendLog(QUESTIONS[idx].q, '(건너뜀)', true);
+    idx++; showQuestion();
+  };
+  function appendLog(q, a, skipped) {
+    const el = document.createElement('div');
+    el.className = 'qa qa--coach fade-up';
+    el.innerHTML = `<div class="qa__q serif">${q}</div>
+      <div class="qa__a">${skipped ? '<span class="faint">'+a+'</span>' : a}
+      ${skipped ? '' : '<span class="cite">[증거]<span class="cite__tip">'+a+'<span class="src">성찰록 · 방금 저장됨</span></span></span>'}</div>`;
+    log.appendChild(el);
+  }
+  function finish() {
+    $('answerBox').classList.add('hidden');
+    $('done').classList.remove('hidden');
+    // 성찰록을 로컬에 저장 (essay에서 재료로 사용)
+    localStorage.setItem('cda_reflection', JSON.stringify(answers));
+  }
+  showQuestion();
+}
+</script>
+</body>
+</html>
