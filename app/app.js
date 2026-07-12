@@ -222,6 +222,7 @@ const NAV_LINKS = [
   { href: 'home.html', label: '홈', key: 'home' },
   { href: 'how-it-works.html', label: '작동 방식', key: 'how' },
   { href: 'dashboard.html', label: '경력관리', key: 'dashboard' },
+  { href: 'curricular.html', label: '교과관리', key: 'curricular' },
   { href: 'competency.html', label: '역량', key: 'competency' },
   { href: 'studio.html', label: '문서', key: 'studio' },
 ];
