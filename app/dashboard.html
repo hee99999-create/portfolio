@@ -223,30 +223,39 @@ async function startAnalysis() {
   document.getElementById('progressView').classList.remove('hidden');
   document.getElementById('s1t').textContent = mode === 'link' ? '링크에서 콘텐츠 가져오는 중…' : '증빙자료(파일) 읽는 중…';
 
+  // 입력 수집 + 백엔드 요청 구성
+  let payload, meta;
+  if (mode === 'link') {
+    const url = document.getElementById('urlInput').value.trim();
+    payload = { source_url: url };
+    meta = { source: 'link', category: 'project', url, files: [], title: '', date: '2025', org: '' };
+  } else {
+    const cat = document.getElementById('catSelect').value;
+    const title = document.getElementById('fTitle').value.trim();
+    const org = document.getElementById('fOrg').value.trim();
+    payload = { text: (title + ' ' + org).trim(), category: cat, title };
+    meta = { source: 'file', category: cat, url: '', files: picked, title,
+             date: document.getElementById('fDate').value.trim() || '2025', org };
+  }
+  const backendPromise = analyzeBackend(payload);   // 백엔드 없으면 null
+
   for (const id of ['s1', 's2', 's3']) {
     const el = document.getElementById(id); el.classList.add('active');
-    await sleep(1000 + Math.random() * 700);
+    await sleep(900 + Math.random() * 500);
     el.classList.remove('active'); el.classList.add('done');
   }
-  await sleep(300);
 
+  const data = await backendPromise;
   let exp;
-  if (mode === 'link') {
-    exp = makeExperience({ source: 'link', category: 'project', url: document.getElementById('urlInput').value.trim() });
+  if (data && Array.isArray(data.competencies) && data.competencies.length) {
+    exp = experienceFromBackend(data, meta);       // 실제 AI 결과
   } else {
-    exp = makeExperience({
-      source: 'file',
-      category: document.getElementById('catSelect').value,
-      title: document.getElementById('fTitle').value.trim(),
-      date: document.getElementById('fDate').value.trim() || '2025',
-      org: document.getElementById('fOrg').value.trim(),
-      description: document.getElementById('fOrg').value.trim(),
-      files: picked,
-    });
+    exp = makeExperience(mode === 'link'            // mock 폴백
+      ? { source: 'link', category: 'project', url: meta.url }
+      : { source: 'file', category: meta.category, title: meta.title, date: meta.date, org: meta.org, description: meta.org, files: picked });
   }
   Store.add(exp);
-  // 방금 등록한 카테고리로 필터 이동
-  curFilter = mode === 'link' ? 'project' : document.getElementById('catSelect').value;
+  curFilter = mode === 'link' ? 'project' : meta.category;
   closeModal();
   render();
 }

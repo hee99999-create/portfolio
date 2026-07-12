@@ -105,6 +105,41 @@ function autoTitle(source, url, label) {
 }
 
 /* ============================================================
+   실제 백엔드 연동 (OpenAI). 꺼져 있으면 null → mock 폴백.
+   백엔드 주소 변경: localStorage.setItem('cda_api','https://...')
+   ============================================================ */
+const API_BASE = (typeof localStorage !== 'undefined' && localStorage.getItem('cda_api')) || 'http://localhost:8000';
+async function analyzeBackend(payload) {
+  try {
+    const r = await fetch(API_BASE + '/analyze', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+    });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch (e) { return null; }
+}
+/* 백엔드 응답 → 통합 경험 모델 변환 */
+function experienceFromBackend(data, meta) {
+  const comps = (data.competencies || []).map(c => ({
+    name: c.name,
+    confidence: c.confidence || 3,
+    pct: Math.min(100, (c.confidence || 3) * 18 + 10),
+    evidence: c.evidence,
+    src: c.source_ref || (meta.files && meta.files[0]) || meta.url || '증빙',
+  }));
+  const s = data.star || {};
+  return {
+    id: '2025-' + String(Math.floor(Math.random() * 9000) + 1000),
+    source: meta.source, category: meta.category || 'project',
+    title: data.title || meta.title || '경험',
+    org: meta.org || '', date: meta.date || '2025',
+    description: meta.org || '', url: meta.url || '', files: meta.files || [],
+    star: { s: s.situation || '', t: s.task || '', a: s.action || '', r: s.result || '' },
+    competencies: comps,
+  };
+}
+
+/* ============================================================
    교과역량 (성적) 저장소 + 분석
    ============================================================ */
 const Curricular = {

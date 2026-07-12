@@ -1,37 +1,38 @@
 """
-PORTRI AI — 백엔드 (증거 기반 역량 추출)
+PORTRI AI — 백엔드 (증거 기반 역량 추출, OpenAI)
 
-링크 또는 텍스트를 받아 원본을 가져오고, Claude로 STAR 분해 + K-CESA 역량을
+링크 또는 텍스트를 받아 원본을 가져오고, OpenAI로 STAR 분해 + K-CESA 역량을
 '증거 인용'과 함께 추출한다. 증거(원문 인용)가 없는 역량은 응답에서 제외한다.
 
 실행:
   cd backend
-  python -m venv .venv && . .venv/Scripts/activate   # (mac/linux: source .venv/bin/activate)
+  python -m venv .venv && .venv\\Scripts\\activate   # (mac/linux: source .venv/bin/activate)
   pip install -r requirements.txt
-  copy .env.example .env   # 그리고 ANTHROPIC_API_KEY 채우기
+  copy .env.example .env   # 그리고 OPENAI_API_KEY 채우기
   uvicorn main:app --reload --port 8000
   # → http://localhost:8000/docs 에서 테스트
 """
+import json
 import os
 from typing import Optional
 
 import httpx
+import openai
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from openai import OpenAI
 from pydantic import BaseModel, Field
-
-import anthropic
 
 load_dotenv()
 
-MODEL = os.getenv("CDA_MODEL", "claude-opus-4-8")
+MODEL = os.getenv("CDA_MODEL", "gpt-4o")
 ORIGINS = [o.strip() for o in os.getenv("CDA_ALLOWED_ORIGINS", "*").split(",")]
 
-client = anthropic.Anthropic()  # ANTHROPIC_API_KEY 를 환경에서 읽음
+client = OpenAI()  # OPENAI_API_KEY 를 환경에서 읽음
 
-app = FastAPI(title="PORTRI AI — Competency Extraction API")
+app = FastAPI(title="PORTRI AI — Competency Extraction API (OpenAI)")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ORIGINS,
@@ -50,43 +51,45 @@ SYSTEM_PROMPT = (
     "역량명은 반드시 K-CESA 6대 핵심역량 중에서만 선택합니다: " + ", ".join(KCESA) + "."
 )
 
-# ---- 구조화 출력용 도구(strict tool use) ----
-EXTRACT_TOOL = {
-    "name": "record_competencies",
-    "description": "학생 경험에서 STAR와 증거 기반 K-CESA 역량을 기록한다.",
-    "strict": True,
-    "input_schema": {
-        "type": "object",
-        "additionalProperties": False,
-        "properties": {
-            "title": {"type": "string", "description": "경험 제목(없으면 생성)"},
-            "star": {
-                "type": "object",
-                "additionalProperties": False,
-                "properties": {
-                    "situation": {"type": "string"},
-                    "task": {"type": "string"},
-                    "action": {"type": "string"},
-                    "result": {"type": "string"},
-                },
-                "required": ["situation", "task", "action", "result"],
-            },
-            "competencies": {
-                "type": "array",
-                "items": {
+# ---- 구조화 출력용 함수(OpenAI function calling) ----
+EXTRACT_FUNCTION = {
+    "type": "function",
+    "function": {
+        "name": "record_competencies",
+        "description": "학생 경험에서 STAR와 증거 기반 K-CESA 역량을 기록한다.",
+        "parameters": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "title": {"type": "string", "description": "경험 제목(없으면 생성)"},
+                "star": {
                     "type": "object",
                     "additionalProperties": False,
                     "properties": {
-                        "name": {"type": "string", "enum": KCESA},
-                        "confidence": {"type": "integer", "enum": [1, 2, 3, 4, 5]},
-                        "evidence": {"type": "string", "description": "원문에서 그대로 인용한 문장"},
-                        "source_ref": {"type": "string", "description": "인용 위치(예: README.md, 3번째 문단)"},
+                        "situation": {"type": "string"},
+                        "task": {"type": "string"},
+                        "action": {"type": "string"},
+                        "result": {"type": "string"},
                     },
-                    "required": ["name", "confidence", "evidence", "source_ref"],
+                    "required": ["situation", "task", "action", "result"],
+                },
+                "competencies": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "name": {"type": "string", "enum": KCESA},
+                            "confidence": {"type": "integer", "enum": [1, 2, 3, 4, 5]},
+                            "evidence": {"type": "string", "description": "원문에서 그대로 인용한 문장"},
+                            "source_ref": {"type": "string", "description": "인용 위치(예: README.md, 3번째 문단)"},
+                        },
+                        "required": ["name", "confidence", "evidence", "source_ref"],
+                    },
                 },
             },
+            "required": ["title", "star", "competencies"],
         },
-        "required": ["title", "star", "competencies"],
     },
 }
 
@@ -100,7 +103,7 @@ class AnalyzeRequest(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model": MODEL}
+    return {"status": "ok", "model": MODEL, "provider": "openai"}
 
 
 async def fetch_url(url: str) -> str:
@@ -140,30 +143,33 @@ async def analyze(req: AnalyzeRequest):
     hint = f"제목 힌트: {req.title}\n" if req.title else ""
     hint += f"카테고리: {req.category}\n" if req.category else ""
 
-    # 2) Claude 호출 (strict tool use 로 구조화)
+    # 2) OpenAI 호출 (function calling 으로 구조화)
     try:
-        resp = client.messages.create(
+        resp = client.chat.completions.create(
             model=MODEL,
-            max_tokens=2000,
-            system=SYSTEM_PROMPT,
-            tools=[EXTRACT_TOOL],
-            tool_choice={"type": "tool", "name": "record_competencies"},
-            messages=[{
-                "role": "user",
-                "content": (
+            temperature=0,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": (
                     f"{hint}다음 경험 원본을 분석해 STAR와 K-CESA 역량을 추출하세요. "
                     f"각 역량에는 원문에서 그대로 인용한 evidence를 반드시 넣으세요.\n\n"
                     f"[원본 출처: {src}]\n\n{content}"
-                ),
-            }],
+                )},
+            ],
+            tools=[EXTRACT_FUNCTION],
+            tool_choice={"type": "function", "function": {"name": "record_competencies"}},
         )
-    except anthropic.APIError as e:
+    except openai.OpenAIError as e:
         raise HTTPException(502, f"AI 분석 실패: {e}")
 
-    # 3) tool_use 블록에서 결과 추출
-    result = next((b.input for b in resp.content if b.type == "tool_use"), None)
-    if result is None:
+    # 3) function call 결과 파싱
+    msg = resp.choices[0].message
+    if not msg.tool_calls:
         raise HTTPException(502, "구조화된 결과를 받지 못했습니다.")
+    try:
+        result = json.loads(msg.tool_calls[0].function.arguments)
+    except json.JSONDecodeError:
+        raise HTTPException(502, "결과 파싱 실패.")
 
     # 4) 증거 검증: 인용문이 실제 원문에 존재하는 역량만 통과 (할루시네이션 차단)
     verified = [
