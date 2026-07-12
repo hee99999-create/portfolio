@@ -34,7 +34,8 @@ table.kc td.n { text-align:right; font-variant-numeric:tabular-nums; }
     <h2>나의 역량, 한눈에</h2>
     <p class="muted mt-1">교과(성적)와 비교과(경력관리)의 증거로 계산된 K-CESA 역량입니다. 학과·동일학년 평균과 비교해 보세요.</p>
     <p class="fine mt-1" id="srcNote">※ 평균값은 데모용 예시입니다.</p>
-    <div class="btn-row mt-2" id="curCta"></div>
+    <div class="stat-row mt-4" id="compStats"></div>
+    <div class="btn-row mt-3" id="curCta"></div>
   </div>
 </section>
 
@@ -79,7 +80,17 @@ if (requireAuth()) {
     note.textContent = '※ 현재 비교과(경력관리)만 반영됨. 평균값은 데모용 예시입니다.';
     cta.innerHTML = '<a class="btn btn--ghost" href="curricular.html" style="padding:7px 16px;font-size:14px">+ 교과역량 추가하기 (성적 입력)</a>';
   }
-  const COLORS = { mine:'#e75f3a', dept:'#2f6f9f', gradeAll:'#1d9e75', gradeDept:'#b07a1a' };
+  // 요약 지표
+  const valid = agg.mine.filter(n => typeof n === 'number');
+  const avg = valid.length ? Math.round(valid.reduce((a,b)=>a+b,0)/valid.length) : 0;
+  const bestI = agg.mine.indexOf(Math.max(...agg.mine));
+  const acts = agg.counts.reduce((a,b)=>a+b,0);
+  document.getElementById('compStats').innerHTML =
+    `<div><div class="stat__num">${avg}</div><div class="stat__label">평균 역량 점수 (0–100)</div></div>
+     <div><div class="stat__num">${agg.mine[bestI]}</div><div class="stat__label">최고 역량 · ${labels[bestI]}</div></div>
+     <div><div class="stat__num">${acts}</div><div class="stat__label">역량 근거 (활동·과목)</div></div>`;
+
+  const COLORS = { mine:'#6C5CE7', dept:'#2f6f9f', gradeAll:'#1d9e75', gradeDept:'#b07a1a' };
   const series = [
     { name:'나의역량', color:COLORS.mine, data:agg.mine, mine:true },
     { name:'학과평균', color:COLORS.dept, data:KCESA_AVG['학과평균'] },
@@ -87,7 +98,7 @@ if (requireAuth()) {
     { name:'동일학년 학과평균', color:COLORS.gradeDept, data:KCESA_AVG['동일학년 학과평균'] },
   ];
 
-  const inkFaint = '#8c8272', grid = 'rgba(140,130,114,0.15)';
+  const inkFaint = '#8a8699', grid = 'rgba(108,92,231,0.12)';
   Chart.defaults.font.family = "'Inter','Pretendard Variable',sans-serif";
   Chart.defaults.color = inkFaint;
 
@@ -111,14 +122,14 @@ if (requireAuth()) {
     type: 'radar',
     data: { labels, datasets: series.map(s => ({
       label: s.name, data: s.data,
-      borderColor: s.color, backgroundColor: s.mine ? 'rgba(231,95,58,0.14)' : 'transparent',
+      borderColor: s.color, backgroundColor: s.mine ? 'rgba(108,92,231,0.14)' : 'transparent',
       borderWidth: s.mine ? 2.5 : 1.5, pointRadius: s.mine ? 4 : 2.5,
       pointBackgroundColor: s.color, fill: s.mine,
     })) },
     options: {
       responsive:true, maintainAspectRatio:false,
       scales: { r:{ min:0, max:100, ticks:{ stepSize:20, backdropColor:'transparent', font:{size:10} },
-        grid:{color:grid}, angleLines:{color:grid}, pointLabels:{ font:{size:12}, color:'#6b6155' } } },
+        grid:{color:grid}, angleLines:{color:grid}, pointLabels:{ font:{size:12}, color:'#5a5670' } } },
       plugins: { legend:{ position:'bottom', labels:{ boxWidth:12, boxHeight:12, usePointStyle:true, pointStyle:'rectRounded', padding:14 } } },
     }
   });
