@@ -231,12 +231,13 @@ const _date = (id, label) => ({ id, label, type: 'date' });
 const _sel = (id, label, options) => ({ id, label, options, type: 'select' });
 const _period = (label) => ({ label, type: 'period' });
 const _hours = (label) => ({ label, type: 'hours' });
+const _hoursOnly = (label) => ({ label, type: 'hoursOnly' });
 const CATEGORY_FIELDS = {
   language:  [_txt('fTitle', '시험 / 점수', '예: TOEIC 960'), _txt('fOrg', '주관기관', '예: ETS'), _date('fDate', '취득일')],
   cert:      [_txt('fTitle', '자격증명', '예: 정보처리기사'), _txt('fOrg', '발행기관', '예: 한국산업인력공단'), _date('fDate', '취득일')],
   volunteer: [_txt('fTitle', '활동명', '예: 지역아동센터 멘토링'), _txt('fOrg', '기관', '봉사기관'), _period('봉사기간'), _hours('봉사시간')],
   award:     [_txt('fTitle', '대회 / 공모전명', '예: OO 해커톤'), _txt('fDetail', '수상내역', '예: 대상 / 우수상 / 입상'), _sel('fPtype', '참여 형태', ['개인', '팀']), _txt('fOrg', '발행기관', '주최 / 발행 기관'), _date('fDate', '수상일')],
-  education: [_txt('fTitle', '교육 / 연수명'), _txt('fOrg', '주관기관'), _period('교육기간')],
+  education: [_txt('fTitle', '교육 / 연수명', '예: 데이터 분석 부트캠프'), _txt('fOrg', '교육기관', '주관기관'), _txt('fPlace', '교육장소', '예: 온라인 / OO센터'), _period('교육기간'), _hoursOnly('교육시간'), _txt('fContent', '교육내용', '배운 내용 · 과정 요약')],
   club:      [_txt('fTitle', '활동명', '예: 총학생회 / 로봇동아리'), _txt('fOrg', '단체 · 역할', '예: 기획부장'), _period('활동기간')],
   research:  [_txt('fTitle', '연구 / 논문명'), _txt('fOrg', '게재처 · 기관'), _date('fDate', '발표 / 게재일')],
   project:   [_txt('fTitle', '프로젝트명'), _txt('fOrg', '소속 · 역할'), _period('프로젝트 기간')],
@@ -255,6 +256,8 @@ function renderFields() {
       return `<label class="label mt-2">${f.label}</label><div class="grid-2"><input class="field" id="fStart" type="text" placeholder="YYYY-MM-DD" style="height:48px"><input class="field" id="fEnd" type="text" placeholder="YYYY-MM-DD" style="height:48px"></div>`;
     if (f.type === 'hours')
       return `<label class="label mt-2">${f.label}</label><div class="flex gap-2 items-center"><input class="field" id="fHours" type="number" min="0" placeholder="0" style="height:48px;width:90px"><span class="caption">시간</span><input class="field" id="fMin" type="number" min="0" max="59" placeholder="0" style="height:48px;width:90px"><span class="caption">분</span></div>`;
+    if (f.type === 'hoursOnly')
+      return `<label class="label mt-2">${f.label}</label><div class="flex gap-2 items-center"><input class="field" id="fHours" type="number" min="0" placeholder="0" style="height:48px;width:110px"><span class="caption">시간</span></div><p class="fine mt-1">시간 단위로 입력해 주세요.</p>`;
     return `<label class="label mt-2">${f.label}</label><input class="field" id="${f.id}" type="text" placeholder="${f.ph || ''}" style="height:48px">`;
   }).join('');
 }
@@ -268,8 +271,12 @@ function collectFields() {
     const hrs = v('fHours'), min = v('fMin');
     if (hrs || min) date = (date ? date + ' · ' : '') + `${hrs || 0}시간${min ? ' ' + min + '분' : ''}`;
   }
-  const desc = [v('fDetail'), v('fPtype') ? v('fPtype') + ' 참여' : ''].filter(Boolean).join(' · ');
-  return { title: v('fTitle'), org: v('fOrg'), date: date || '2025', description: desc };
+  const parts = [];
+  if (v('fDetail')) parts.push(v('fDetail'));
+  if (v('fContent')) parts.push(v('fContent'));
+  if (v('fPtype')) parts.push(v('fPtype') + ' 참여');
+  if (v('fPlace')) parts.push('장소: ' + v('fPlace'));
+  return { title: v('fTitle'), org: v('fOrg'), date: date || '2025', description: parts.join(' · ') };
 }
 async function startAnalysis() {
   document.getElementById('inputView').classList.add('hidden');
