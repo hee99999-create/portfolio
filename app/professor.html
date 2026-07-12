@@ -5,6 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>교수 — PORTRI AI</title>
 <link rel="stylesheet" href="styles.css">
+<style>
+.prof-card { position:relative; overflow:hidden; }
+.prof-card::before { content:''; position:absolute; inset:0 0 auto 0; height:4px; background:var(--grad); }
+.prof-card.is-locked::before { background:var(--hairline); }
+.prof-card.is-locked { opacity:.72; }
+.prof-head { display:flex; align-items:center; gap:12px; margin-top:6px; }
+.avatar { width:44px; height:44px; border-radius:14px; flex:none;
+  display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.05rem;
+  background:var(--accent-tint); color:var(--color-primary); }
+.avatar.lock { background:var(--surface-parchment); color:var(--ink-faint); }
+.prof-badge { margin-left:auto; font-size:11px; font-weight:600; padding:4px 10px; border-radius:var(--r-pill); }
+.prof-badge.ok { background:var(--accent-tint); color:var(--color-primary); }
+.prof-badge.wait { background:var(--surface-parchment); color:var(--ink-faint); }
+</style>
 </head>
 <body>
 <nav class="nav" data-nav></nav>
@@ -19,6 +33,7 @@
   <div class="container">
     <h2>지도학생의 성장 맥락</h2>
     <p class="muted mt-1">활동 목록이 아니라, 증거로 뒷받침된 역량으로 봅니다.</p>
+    <div class="stat-row mt-4" id="profStats"></div>
   </div>
 </section>
 
@@ -35,14 +50,26 @@ const students = [
   { name: '이O준', major: '컴퓨터공학', consent: true, exp: 5, top: ['자기개발능력','종합적사고력'], note: '오픈소스 기여로 기술·협업 증거 확보.' },
   { name: '박O서', major: '디자인', consent: false, exp: 3, top: [], note: '열람 동의 대기 중 — 요약 비공개.' },
 ];
+
+const consented = students.filter(s => s.consent);
+const avgExp = consented.length ? Math.round(consented.reduce((n,s)=>n+s.exp,0)/consented.length) : 0;
+document.getElementById('profStats').innerHTML =
+  `<div><div class="stat__num">${students.length}</div><div class="stat__label">지도학생</div></div>
+   <div><div class="stat__num">${consented.length}</div><div class="stat__label">열람 동의</div></div>
+   <div><div class="stat__num">${avgExp}</div><div class="stat__label">동의학생 평균 경험</div></div>`;
+
 document.getElementById('studentGrid').innerHTML = students.map(s => `
-  <div class="card">
-    <div class="flex between items-center"><strong>${s.name}</strong><span class="caption">${s.major}</span></div>
+  <div class="card prof-card ${s.consent ? '' : 'is-locked'}">
+    <div class="prof-head">
+      <span class="avatar ${s.consent ? '' : 'lock'}">${s.consent ? s.name[0] : '🔒'}</span>
+      <div><strong>${s.name}</strong><div class="caption">${s.major}</div></div>
+      <span class="prof-badge ${s.consent ? 'ok' : 'wait'}">${s.consent ? '열람 동의' : '동의 대기'}</span>
+    </div>
     ${s.consent ? `
-      <p class="mt-2 muted">경험 ${s.exp}건 · 대표 역량</p>
+      <p class="mt-3 muted">경험 ${s.exp}건 · 대표 역량</p>
       <div class="exp-card__chips mt-1">${s.top.map(t=>`<span class="comp-chip">${t}</span>`).join('')}</div>
       <p class="fine mt-2">${s.note}</p>` : `
-      <p class="mt-3 faint">🔒 ${s.note}</p>`}
+      <p class="mt-3 faint">${s.note}</p>`}
   </div>`).join('');
 </script>
 </body>

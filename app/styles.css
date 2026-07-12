@@ -350,7 +350,12 @@ h3, .h3 { font-weight: 600; letter-spacing: -0.02em;
   box-shadow: 0 8px 24px var(--accent-glow); }
 
 /* Empty state */
-.empty { text-align: center; padding: var(--s-10) var(--s-3); }
+.empty { text-align: center; padding: var(--s-8) var(--s-3);
+  background: #fff; border: 1.5px dashed var(--accent-ring); border-radius: 20px; }
+.empty__icon { width: 72px; height: 72px; border-radius: 20px; margin: 0 auto var(--s-2);
+  display: flex; align-items: center; justify-content: center; font-size: 32px;
+  background: var(--accent-tint); }
+.empty h3 { font-size: 1.25rem; }
 .empty__hint { color: var(--ink-faint); margin-top: 10px; }
 
 /* ============================================================

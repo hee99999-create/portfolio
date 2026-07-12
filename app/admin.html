@@ -6,9 +6,11 @@
 <title>관리자 — PORTRI AI</title>
 <link rel="stylesheet" href="styles.css">
 <style>
-.bar-row { display:grid; grid-template-columns:130px 1fr 48px; align-items:center; gap:12px; margin-top:12px; }
-.bar { height:12px; border-radius:var(--r-pill); background:var(--color-primary); }
-.bar-track { background:var(--pearl-ring); border-radius:var(--r-pill); }
+.bar-row { display:grid; grid-template-columns:140px 1fr 52px; align-items:center; gap:14px; margin-top:14px; }
+.bar-row .name { font-size:13px; color:var(--ink-soft); }
+.bar { height:14px; border-radius:var(--r-pill); background:var(--grad); transition:width .6s ease; }
+.bar-track { background:var(--pearl-ring); border-radius:var(--r-pill); overflow:hidden; }
+.bar-val { font-size:13px; font-weight:700; color:var(--color-primary); text-align:right; font-variant-numeric:tabular-nums; }
 </style>
 </head>
 <body>
@@ -49,9 +51,9 @@ const dist = [
   ['자기개발능력', 59], ['종합적사고력', 47], ['자원정보기술활용', 38],
 ];
 document.getElementById('bars').innerHTML = dist.map(([n,v]) => `
-  <div class="bar-row"><span class="fine">${n}</span>
+  <div class="bar-row"><span class="name">${n}</span>
     <span class="bar-track"><span class="bar" style="width:${v}%"></span></span>
-    <span class="fine">${v}%</span></div>`).join('');
+    <span class="bar-val">${v}%</span></div>`).join('');
 </script>
 </body>
 </html>
