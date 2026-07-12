@@ -5,15 +5,64 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>입장 — PORTRI AI</title>
 <link rel="stylesheet" href="styles.css">
+<style>
+.auth { min-height:calc(100vh - var(--nav-h)); display:grid; grid-template-columns:1.05fr 1fr; }
+
+/* 좌: 브랜드 패널 */
+.auth-brand { background:var(--grad); color:#fff; padding:clamp(40px,5.5vw,72px);
+  display:flex; flex-direction:column; justify-content:space-between; gap:40px; position:relative; overflow:hidden; }
+.auth-brand::after { content:''; position:absolute; right:-80px; bottom:-80px; width:300px; height:300px;
+  border-radius:50%; background:rgba(255,255,255,0.08); }
+.auth-logo { display:inline-flex; align-items:center; gap:10px; font-weight:700; font-size:20px; color:#fff; letter-spacing:-0.02em; z-index:1; }
+.auth-logo:hover { text-decoration:none; opacity:.92; }
+.auth-logo .mark { width:32px; height:32px; border-radius:9px; background:rgba(255,255,255,0.22);
+  display:inline-flex; align-items:center; justify-content:center; font-size:17px; }
+.auth-tagline { font-size:clamp(1.7rem,2.6vw,2.4rem); line-height:1.24; letter-spacing:-0.02em; color:#fff; }
+.auth-lead { margin-top:14px; color:rgba(255,255,255,0.9); max-width:34ch; line-height:1.55; }
+.auth-benefits { list-style:none; margin-top:30px; display:flex; flex-direction:column; gap:15px; z-index:1; }
+.auth-benefits li { display:flex; align-items:center; gap:13px; font-size:15px; color:rgba(255,255,255,0.96); }
+.auth-benefits .ic { width:38px; height:38px; border-radius:11px; background:rgba(255,255,255,0.16); flex:none;
+  display:inline-flex; align-items:center; justify-content:center; font-size:18px; }
+.auth-fine { font-size:12.5px; color:rgba(255,255,255,0.72); z-index:1; }
+
+/* 우: 폼 */
+.auth-form { display:flex; align-items:center; justify-content:center; padding:clamp(28px,5vw,56px); background:var(--surface-white); }
+.auth-card { width:100%; max-width:400px; }
+.social-btn { flex:1; justify-content:center; cursor:not-allowed; }
+
+@media(max-width:820px){
+  .auth { grid-template-columns:1fr; }
+  .auth-brand { padding:30px 24px; gap:18px; }
+  .auth-brand::after { display:none; }
+  .auth-lead, .auth-benefits, .auth-fine { display:none; }
+  .auth-tagline { font-size:1.5rem; }
+}
+</style>
 </head>
 <body>
 <nav class="nav" data-nav></nav>
 
-<section class="tile tile--parchment" style="min-height:calc(100vh - var(--nav-h));display:flex;align-items:center">
-  <div class="container" style="max-width:440px">
-    <div class="pearl">
-      <p class="caption">PORTRI AI</p>
-      <h2 class="mt-1" id="formTitle">당신의 아카이브에 입장</h2>
+<section class="auth">
+  <!-- 브랜드 패널 -->
+  <div class="auth-brand">
+    <a class="auth-logo" href="home.html"><span class="mark">P</span> PORTRI AI</a>
+    <div>
+      <h2 class="auth-tagline">경험을 역량으로,<br>역량을 증명으로.</h2>
+      <p class="auth-lead">AI가 나의 경험에서 역량을 찾아내고, 이력서·자기소개서·포트폴리오까지 완성합니다.</p>
+      <ul class="auth-benefits">
+        <li><span class="ic">📊</span> 경험에서 K-CESA 6대 역량을 증거와 함께 추출</li>
+        <li><span class="ic">📈</span> 교과·비교과를 누적해 성장을 추적</li>
+        <li><span class="ic">📄</span> 축적된 데이터로 문서를 자동 생성</li>
+      </ul>
+    </div>
+    <p class="auth-fine">데모 데이터는 이 브라우저에만 저장됩니다.</p>
+  </div>
+
+  <!-- 폼 -->
+  <div class="auth-form">
+    <div class="auth-card">
+      <p class="eyebrow">PORTRI AI</p>
+      <h2 class="mt-2" id="formTitle">당신의 아카이브에 입장</h2>
       <p class="muted mt-1" id="formSub">증거로 검증된 역량이 기다립니다.</p>
 
       <form class="mt-4" onsubmit="return doLogin(event)">
@@ -31,24 +80,23 @@
           <p class="fine mt-1" id="pwHint">최소 8자 이상.</p>
         </div>
         <p id="errMsg" class="fine hidden" style="color:#c0392b;margin-top:8px"></p>
-        <button class="btn btn--primary" id="submitBtn" type="submit" style="width:100%;margin-top:var(--s-3)">입장</button>
+        <button class="btn btn--grad" id="submitBtn" type="submit" style="width:100%;margin-top:var(--s-3)">입장</button>
       </form>
 
-      <div class="mt-3 center">
+      <div class="mt-4 center">
         <span class="caption">소셜 로그인 (준비 중)</span>
-        <div class="btn-row mt-1" style="justify-content:center">
-          <button class="chip" disabled>카카오</button>
-          <button class="chip" disabled>네이버</button>
-          <button class="chip" disabled>Google</button>
+        <div class="btn-row mt-2">
+          <button class="chip social-btn" disabled>카카오</button>
+          <button class="chip social-btn" disabled>네이버</button>
+          <button class="chip social-btn" disabled>Google</button>
         </div>
       </div>
 
-      <p class="center mt-3 caption">
+      <p class="center mt-4 caption">
         <span id="toggleText">아직 계정이 없나요?</span>
         <a href="#" class="link" onclick="return toggleMode()"><span id="toggleLink">회원가입</span></a>
       </p>
     </div>
-    <p class="fine center mt-3">로그인하면 데모 데이터가 브라우저에만 저장됩니다. 실제 서버 연동은 없습니다.</p>
   </div>
 </section>
 
@@ -67,6 +115,7 @@ function toggleMode() {
   document.getElementById('submitBtn').textContent = signup ? '가입하고 입장' : '입장';
   document.getElementById('toggleText').textContent = signup ? '이미 계정이 있나요?' : '아직 계정이 없나요?';
   document.getElementById('toggleLink').textContent = signup ? '로그인' : '회원가입';
+  document.getElementById('pwHint').textContent = signup ? '최소 8자 이상으로 설정하세요.' : '최소 8자 이상.';
   document.getElementById('pwInput').setAttribute('autocomplete', signup ? 'new-password' : 'current-password');
   return false;
 }
