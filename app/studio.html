@@ -12,6 +12,7 @@
 .doc-eyebrow { font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--color-primary); font-weight:700; }
 .doc h1.doc-t { font-family:var(--font-serif); font-size:2.3rem; letter-spacing:-.01em; margin-top:6px; line-height:1.1; }
 .doc-sub { color:var(--ink-faint); font-size:14px; margin-top:8px; }
+.doc-photo { width:104px; height:132px; object-fit:cover; border-radius:8px; border:1px solid var(--hairline); flex:none; }
 .doc-section { margin-top:var(--s-5); }
 .doc-section h3 { font-size:1.02rem; letter-spacing:.02em; padding-bottom:6px; margin-bottom:12px; border-bottom:1px solid var(--hairline); color:var(--color-primary); }
 .res-row { display:grid; grid-template-columns:130px 1fr; gap:16px; padding:12px 0; border-bottom:1px solid var(--pearl-ring); }
@@ -42,8 +43,37 @@
     <button id="tPortfolio" onclick="switchDoc('portfolio')">포트폴리오</button>
   </div>
   <span class="subnav__spacer"></span>
-  <span class="caption" id="metaCount"></span>
+  <span class="caption">테마</span>
+  <select id="themeColor" class="chip" style="padding:6px 10px" onchange="applyTheme()">
+    <option value="#6C5CE7">퍼플</option><option value="#23407a">네이비</option>
+    <option value="#8a2b3a">버건디</option><option value="#2f6b5e">그린</option><option value="#23222E">모노</option>
+  </select>
+  <select id="themeFont" class="chip" style="padding:6px 10px" onchange="applyTheme()">
+    <option value="sans">고딕</option><option value="serif">명조</option>
+  </select>
+  <span class="caption" id="metaCount" style="margin-left:12px"></span>
 </div>
+
+<section class="tile tile--white compact no-print">
+  <div class="container">
+    <details>
+      <summary class="caption" style="cursor:pointer">▸ 내 정보 (사진 · 연락처 · 학력) 편집 — 이력서/포트폴리오에 반영</summary>
+      <div class="grid-2 mt-3" style="max-width:760px">
+        <div><label class="label">이름</label><input class="field" id="pName" style="height:44px"></div>
+        <div><label class="label">전화</label><input class="field" id="pPhone" placeholder="010-0000-0000" style="height:44px"></div>
+        <div><label class="label">이메일</label><input class="field" id="pEmail" placeholder="you@univ.ac.kr" style="height:44px"></div>
+        <div><label class="label">학교</label><input class="field" id="pSchool" placeholder="OO대학교" style="height:44px"></div>
+        <div><label class="label">전공</label><input class="field" id="pMajor" placeholder="컴퓨터공학과" style="height:44px"></div>
+        <div><label class="label">학년 / 졸업</label><input class="field" id="pGrade" placeholder="예: 4학년 / 2026 졸업예정" style="height:44px"></div>
+      </div>
+      <div class="mt-2" style="max-width:760px"><label class="label">증명사진</label>
+        <input type="file" id="pPhoto" accept="image/*" onchange="onPhoto()" style="display:none">
+        <button class="btn btn--dark" onclick="document.getElementById('pPhoto').click()">사진 선택</button>
+        <span class="caption" id="photoState" style="margin-left:10px"></span></div>
+      <div class="btn-row mt-3"><button class="btn btn--primary" onclick="saveProfile()">내 정보 저장</button></div>
+    </details>
+  </div>
+</section>
 
 <section class="tile tile--white compact no-print" id="selfControls">
   <div class="container">
@@ -84,10 +114,13 @@ if (requireAuth()) {
   const reflection = (() => { try { return JSON.parse(localStorage.getItem('cda_reflection')) || []; } catch { return []; } })();
   const allEvidence = items.flatMap(x => x.competencies.map(c => ({ ...c, from: x.title })));
   const cite = (n, ev) => `<span class="cite">[${n}]<span class="cite__tip">${ev.evidence}<span class="src">${ev.src} · ${ev.from || ''}</span></span></span>`;
-  const shell = (eyebrow, name, sub, body) =>
-    `<div class="doc"><div class="doc-head"><div class="doc-eyebrow">${eyebrow}</div>`
-    + `<h1 class="doc-t">${name}</h1>${sub ? `<div class="doc-sub">${sub}</div>` : ''}</div>`
-    + `${body}<div class="doc-footer"><span>PORTRI AI · 증거 기반 역량 리포트</span><span>${DOC_DATE}</span></div></div>`;
+  const shell = (eyebrow, name, subLines, body, photo) => {
+    const subs = (subLines || []).filter(Boolean).map(s => `<div class="doc-sub">${s}</div>`).join('');
+    const pic = photo ? `<img class="doc-photo" src="${photo}" alt="">` : '';
+    return `<div class="doc"><div class="doc-head" style="display:flex;gap:24px;align-items:flex-start">`
+      + `<div style="flex:1"><div class="doc-eyebrow">${eyebrow}</div><h1 class="doc-t">${name}</h1>${subs}</div>${pic}</div>`
+      + `${body}<div class="doc-footer"><span>PORTRI AI · 증거 기반 역량 리포트</span><span>${DOC_DATE}</span></div></div>`;
+  };
 
   const TOPICS = {
     growth: { label: '성장 과정', build: () => [
@@ -117,7 +150,51 @@ if (requireAuth()) {
     el.setAttribute('contenteditable', editing);
     el.classList.toggle('editing', editing);
     el.oninput = () => localStorage.setItem(docKey(), el.innerHTML);
+    themeToDoc(currentTheme());
   }
+  /* 프로필(사진·연락처·학력) */
+  function getProfile() { try { return JSON.parse(localStorage.getItem('cda_profile')) || {}; } catch { return {}; } }
+  window.onPhoto = () => {
+    const f = $('pPhoto').files[0]; if (!f) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const w = 208, h = Math.round(img.height * (w / img.width));
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(img, 0, 0, w, h);
+        window._photo = cv.toDataURL('image/jpeg', 0.82);
+        $('photoState').textContent = '사진 준비됨 — [내 정보 저장]을 누르세요';
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(f);
+  };
+  window.saveProfile = () => {
+    const g = id => $(id).value.trim();
+    const prev = getProfile();
+    const p = { name: g('pName'), phone: g('pPhone'), email: g('pEmail'), school: g('pSchool'),
+                major: g('pMajor'), grade: g('pGrade'), photo: window._photo || prev.photo || '' };
+    localStorage.setItem('cda_profile', JSON.stringify(p));
+    $('photoState').textContent = '저장됨 ✓';
+    switchDoc(cur);
+  };
+  /* 테마(색·폰트) */
+  function currentTheme() { try { return JSON.parse(localStorage.getItem('cda_doc_theme')) || { color: '#6C5CE7', font: 'sans' }; } catch { return { color: '#6C5CE7', font: 'sans' }; } }
+  function hexA(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; }
+  function themeToDoc(t) {
+    const el = document.querySelector('#docBody .doc'); if (!el) return;
+    el.style.setProperty('--color-primary', t.color);
+    el.style.setProperty('--color-primary-press', t.color);
+    el.style.setProperty('--accent-tint', hexA(t.color, 0.12));
+    el.style.setProperty('--accent-tint-strong', hexA(t.color, 0.2));
+    el.style.fontFamily = t.font === 'serif' ? "'Newsreader','Pretendard Variable',Georgia,serif" : "var(--font-sans)";
+  }
+  window.applyTheme = () => {
+    const t = { color: $('themeColor').value, font: $('themeFont').value };
+    localStorage.setItem('cda_doc_theme', JSON.stringify(t));
+    themeToDoc(t);
+  };
   window.toggleEdit = () => {
     editing = !editing;
     const b = $('editBtn'); b.textContent = editing ? '편집 완료' : '편집'; b.classList.toggle('btn--primary', editing);
@@ -159,7 +236,7 @@ if (requireAuth()) {
       n++; c++;
       return `<p>${p.t} ${cite(c, p.ev)}</p>`;
     }).join('');
-    $('docBody').innerHTML = shell(`자기소개서 — ${TOPICS[curTopic].label}`, user.name, '', html);
+    $('docBody').innerHTML = shell(`자기소개서 — ${TOPICS[curTopic].label}`, getProfile().name || user.name, [], html);
     $('counts').textContent = `문장 ${n} · 인용 ${c}`;
     applyDoc();
   }
@@ -180,7 +257,10 @@ if (requireAuth()) {
       </div>`).join('');
     const body = `<div class="doc-section"><h3>핵심 역량</h3><div class="exp-card__chips">${topComp.map(n => `<span class="comp-chip">${n}</span>`).join('')}</div></div>`
       + sections + `<p class="fine mt-4">본 이력서의 모든 항목은 증빙자료에 근거합니다. (총 ${items.length}건)</p>`;
-    $('docBody').innerHTML = shell('이력서 · RÉSUMÉ', user.name, user.email || '', body);
+    const p = getProfile();
+    const contact = [p.phone, p.email || user.email].filter(Boolean).join(' · ');
+    const edu = [p.school, p.major, p.grade].filter(Boolean).join(' · ');
+    $('docBody').innerHTML = shell('이력서 · RÉSUMÉ', p.name || user.name, [contact, edu], body, p.photo);
     $('counts').textContent = `경력 ${items.length}건 · 역량 ${topComp.length}`;
     applyDoc();
   }
@@ -196,11 +276,21 @@ if (requireAuth()) {
         <p>${x.star.a}</p>
         <div class="exp-card__chips mt-2">${chips}</div></div>`;
     }).join('');
-    $('docBody').innerHTML = shell('포트폴리오', `${user.name}의 역량 자산`, `증거로 검증된 ${items.length}개의 경험`, body);
+    const p = getProfile();
+    const contact = [p.phone, p.email || user.email].filter(Boolean).join(' · ');
+    $('docBody').innerHTML = shell('포트폴리오', `${p.name || user.name}의 역량 자산`, [`증거로 검증된 ${items.length}개의 경험`, contact], body, p.photo);
     $('counts').textContent = `경험 ${items.length}건 · 인용 ${c}`;
     applyDoc();
   }
 
+  // 초기값: 프로필 입력 채우기 + 테마 선택값
+  (() => {
+    const p = getProfile();
+    $('pName').value = p.name || user.name || '';
+    $('pPhone').value = p.phone || ''; $('pEmail').value = p.email || user.email || '';
+    $('pSchool').value = p.school || ''; $('pMajor').value = p.major || ''; $('pGrade').value = p.grade || '';
+    const t = currentTheme(); $('themeColor').value = t.color; $('themeFont').value = t.font;
+  })();
   switchDoc('self');
 }
 </script>
