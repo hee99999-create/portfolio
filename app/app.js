@@ -142,7 +142,7 @@ function experienceFromBackend(data, meta) {
     source: meta.source, category: meta.category || 'project',
     title: data.title || meta.title || '경험',
     org: meta.org || '', date: meta.date || '2025',
-    description: meta.org || '', url: meta.url || '', files: meta.files || [],
+    description: meta.description || meta.org || '', url: meta.url || '', files: meta.files || [],
     star: { s: s.situation || '', t: s.task || '', a: s.action || '', r: s.result || '' },
     competencies: comps,
     engine: 'ai',

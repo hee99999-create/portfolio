@@ -69,7 +69,7 @@ if (requireAuth()) {
     $('regNo').textContent = '등록번호 ' + x.id;
     $('catLabel').textContent = CAT[x.category]?.label || '경험';
     $('cardTitle').textContent = x.title;
-    $('cardMeta').textContent = [x.date, x.org].filter(Boolean).join(' · ');
+    $('cardMeta').textContent = [x.date, x.org, x.description].filter(Boolean).join(' · ');
     $('proofRow').innerHTML = x.source === 'link'
       ? `<a class="link link--chevron" href="${x.url}" target="_blank" rel="noopener">${x.url}</a>`
       : (x.files.length ? '📎 증빙자료: ' + x.files.join(', ') : '증빙자료 첨부됨');

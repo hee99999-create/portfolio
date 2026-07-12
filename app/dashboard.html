@@ -101,11 +101,7 @@
         <select class="select" id="catSelect" style="width:100%" onchange="onCatChange()">
           <option value="">선택하세요</option>
         </select>
-        <div class="mt-2"><label class="label">제목</label>
-          <input class="field" id="fTitle" placeholder="예: TOEIC 960 / 캡스톤 프로젝트" style="height:48px"></div>
-        <div id="dateArea" class="mt-2"></div>
-        <div class="mt-2"><label class="label">기관 / 설명</label>
-          <input class="field" id="fOrg" placeholder="발급기관 또는 한 줄 설명" style="height:48px"></div>
+        <div id="fieldArea"></div>
         <div class="mt-2">
           <label class="label">증빙자료 첨부 (필수)</label>
           <input type="file" id="fFile" multiple onchange="onFilePick()" style="display:none">
@@ -185,7 +181,7 @@ function render() {
           <strong style="margin-left:8px">${x.title}</strong></div>
         <span class="caption">${x.engine === 'ai' ? '🟢 AI 분석' : '⚪ 데모'} · ${x.date}</span>
       </div>
-      <div class="caption mt-1">${x.org || ''} · ${proof} · 등록번호 ${x.id}</div>
+      <div class="caption mt-1">${x.description ? x.description + ' · ' : ''}${x.org ? x.org + ' · ' : ''}${proof} · 등록번호 ${x.id}</div>
       <div class="exp-card__chips mt-2">${chips}</div>
     </div>`;
   }).join('');
@@ -202,7 +198,7 @@ function openModal() {
   document.getElementById('urlInput').value = '';
   document.getElementById('fileNames').textContent = '다중 선택 가능. 첨부하면 역량을 분석합니다.';
   document.getElementById('catSelect').value = '';
-  renderDateFields();
+  renderFields();
   setTimeout(() => document.getElementById('urlInput').focus(), 50);
   checkReady();
 }
@@ -227,40 +223,53 @@ function checkReady() {
   else ok = document.getElementById('catSelect').value !== '' && picked.length > 0;
   document.getElementById('analyzeBtn').disabled = !ok;
 }
-function onCatChange() { renderDateFields(); checkReady(); }
-/* 카테고리별 날짜/시간 입력 필드 */
-function renderDateFields() {
-  const area = document.getElementById('dateArea');
-  if (!area) return;
-  const cat = document.getElementById('catSelect').value;
-  const periodRow = (a, b) =>
-    `<div class="grid-2"><input class="field" id="${a}" type="text" placeholder="YYYY-MM-DD" style="height:48px">`
-    + `<input class="field" id="${b}" type="text" placeholder="YYYY-MM-DD" style="height:48px"></div>`;
-  if (cat === 'volunteer') {
-    area.innerHTML =
-      `<label class="label">봉사기간</label>${periodRow('fStart', 'fEnd')}`
-      + `<label class="label mt-2">봉사시간</label>`
-      + `<div class="flex gap-2 items-center">`
-      + `<input class="field" id="fHours" type="number" min="0" placeholder="0" style="height:48px;width:90px"><span class="caption">시간</span>`
-      + `<input class="field" id="fMin" type="number" min="0" max="59" placeholder="0" style="height:48px;width:90px"><span class="caption">분</span></div>`;
-  } else if (['', 'cert', 'language', 'award'].includes(cat)) {
-    area.innerHTML = `<label class="label">취득일</label>`
-      + `<input class="field" id="fDate" type="text" placeholder="YYYY-MM-DD" style="height:48px">`;
-  } else {
-    area.innerHTML = `<label class="label">활동기간</label>${periodRow('fStart', 'fEnd')}`;
-  }
+function onCatChange() { renderFields(); checkReady(); }
+
+/* 카테고리별 입력 필드 정의 (수상실적 등 대학 시스템 항목 참고) */
+const _txt = (id, label, ph) => ({ id, label, ph, type: 'text' });
+const _date = (id, label) => ({ id, label, type: 'date' });
+const _sel = (id, label, options) => ({ id, label, options, type: 'select' });
+const _period = (label) => ({ label, type: 'period' });
+const _hours = (label) => ({ label, type: 'hours' });
+const CATEGORY_FIELDS = {
+  language:  [_txt('fTitle', '시험 / 점수', '예: TOEIC 960'), _txt('fOrg', '주관기관', '예: ETS'), _date('fDate', '취득일')],
+  cert:      [_txt('fTitle', '자격증명', '예: 정보처리기사'), _txt('fOrg', '발행기관', '예: 한국산업인력공단'), _date('fDate', '취득일')],
+  volunteer: [_txt('fTitle', '활동명', '예: 지역아동센터 멘토링'), _txt('fOrg', '기관', '봉사기관'), _period('봉사기간'), _hours('봉사시간')],
+  award:     [_txt('fTitle', '대회 / 공모전명', '예: OO 해커톤'), _txt('fDetail', '수상내역', '예: 대상 / 우수상 / 입상'), _sel('fPtype', '참여 형태', ['개인', '팀']), _txt('fOrg', '발행기관', '주최 / 발행 기관'), _date('fDate', '수상일')],
+  education: [_txt('fTitle', '교육 / 연수명'), _txt('fOrg', '주관기관'), _period('교육기간')],
+  club:      [_txt('fTitle', '활동명', '예: 총학생회 / 로봇동아리'), _txt('fOrg', '단체 · 역할', '예: 기획부장'), _period('활동기간')],
+  research:  [_txt('fTitle', '연구 / 논문명'), _txt('fOrg', '게재처 · 기관'), _date('fDate', '발표 / 게재일')],
+  project:   [_txt('fTitle', '프로젝트명'), _txt('fOrg', '소속 · 역할'), _period('프로젝트 기간')],
+  etc:       [_txt('fTitle', '제목'), _txt('fOrg', '기관 / 설명'), _date('fDate', '일자')],
+};
+function renderFields() {
+  const area = document.getElementById('fieldArea'); if (!area) return;
+  const spec = CATEGORY_FIELDS[document.getElementById('catSelect').value];
+  if (!spec) { area.innerHTML = '<p class="caption mt-3">카테고리를 먼저 선택하세요.</p>'; return; }
+  area.innerHTML = spec.map(f => {
+    if (f.type === 'select')
+      return `<label class="label mt-2">${f.label}</label><select class="select" id="${f.id}" style="width:100%"><option value="">선택</option>${f.options.map(o => `<option>${o}</option>`).join('')}</select>`;
+    if (f.type === 'date')
+      return `<label class="label mt-2">${f.label}</label><input class="field" id="${f.id}" type="text" placeholder="YYYY-MM-DD" style="height:48px">`;
+    if (f.type === 'period')
+      return `<label class="label mt-2">${f.label}</label><div class="grid-2"><input class="field" id="fStart" type="text" placeholder="YYYY-MM-DD" style="height:48px"><input class="field" id="fEnd" type="text" placeholder="YYYY-MM-DD" style="height:48px"></div>`;
+    if (f.type === 'hours')
+      return `<label class="label mt-2">${f.label}</label><div class="flex gap-2 items-center"><input class="field" id="fHours" type="number" min="0" placeholder="0" style="height:48px;width:90px"><span class="caption">시간</span><input class="field" id="fMin" type="number" min="0" max="59" placeholder="0" style="height:48px;width:90px"><span class="caption">분</span></div>`;
+    return `<label class="label mt-2">${f.label}</label><input class="field" id="${f.id}" type="text" placeholder="${f.ph || ''}" style="height:48px">`;
+  }).join('');
 }
-/* 현재 표시된 필드에서 날짜(표시용 문자열) 수집 */
-function collectDate() {
-  const d = document.getElementById('fDate');
-  if (d) return d.value.trim() || '2025';
-  const s = document.getElementById('fStart')?.value.trim();
-  const e = document.getElementById('fEnd')?.value.trim();
-  let str = (s || e) ? `${s || '?'} ~ ${e || '?'}` : '2025';
-  const hrs = document.getElementById('fHours')?.value.trim();
-  const min = document.getElementById('fMin')?.value.trim();
-  if (hrs || min) str += ` · ${hrs || 0}시간${min ? ' ' + min + '분' : ''}`;
-  return str;
+/* 표시된 필드에서 값 수집 → {title, org, date, description} */
+function collectFields() {
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  let date = v('fDate');
+  if (!date) {
+    const s = v('fStart'), e = v('fEnd');
+    if (s || e) date = `${s || '?'} ~ ${e || '?'}`;
+    const hrs = v('fHours'), min = v('fMin');
+    if (hrs || min) date = (date ? date + ' · ' : '') + `${hrs || 0}시간${min ? ' ' + min + '분' : ''}`;
+  }
+  const desc = [v('fDetail'), v('fPtype') ? v('fPtype') + ' 참여' : ''].filter(Boolean).join(' · ');
+  return { title: v('fTitle'), org: v('fOrg'), date: date || '2025', description: desc };
 }
 async function startAnalysis() {
   document.getElementById('inputView').classList.add('hidden');
@@ -275,11 +284,10 @@ async function startAnalysis() {
     meta = { source: 'link', category: 'project', url, files: [], title: '', date: '2025', org: '' };
   } else {
     const cat = document.getElementById('catSelect').value;
-    const title = document.getElementById('fTitle').value.trim();
-    const org = document.getElementById('fOrg').value.trim();
-    payload = { text: (title + ' ' + org).trim(), category: cat, title };
-    meta = { source: 'file', category: cat, url: '', files: picked, title,
-             date: collectDate(), org };
+    const f = collectFields();
+    payload = { text: [f.title, f.org, f.description].filter(Boolean).join(' — '), category: cat, title: f.title };
+    meta = { source: 'file', category: cat, url: '', files: picked, title: f.title,
+             date: f.date, org: f.org, description: f.description };
   }
   const backendPromise = analyzeBackend(payload);   // 백엔드 없으면 null
 
@@ -296,7 +304,7 @@ async function startAnalysis() {
   } else {
     exp = makeExperience(mode === 'link'            // mock 폴백
       ? { source: 'link', category: 'project', url: meta.url }
-      : { source: 'file', category: meta.category, title: meta.title, date: meta.date, org: meta.org, description: meta.org, files: picked });
+      : { source: 'file', category: meta.category, title: meta.title, date: meta.date, org: meta.org, description: meta.description || meta.org, files: picked });
   }
   Store.add(exp);
   curFilter = mode === 'link' ? 'project' : meta.category;
