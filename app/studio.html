@@ -18,6 +18,7 @@
 .res-row { display:grid; grid-template-columns:130px 1fr; gap:16px; padding:12px 0; border-bottom:1px solid var(--pearl-ring); }
 .res-date { color:var(--ink-faint); font-size:14px; }
 .pf-item { padding:var(--s-3) 0; border-bottom:1px solid var(--pearl-ring); }
+.pf-img { width:100%; max-height:320px; object-fit:cover; border-radius:12px; border:1px solid var(--hairline); margin-bottom:12px; }
 .doc p { line-height:1.85; margin-top:10px; }
 .doc-footer { margin-top:var(--s-6); padding-top:14px; border-top:1px solid var(--hairline); font-size:12px; color:var(--ink-faint); display:flex; justify-content:space-between; }
 @media print {
@@ -82,10 +83,12 @@
   </div>
 </section>
 
+<input type="file" id="expImgInput" accept="image/*" style="display:none">
+
 <section class="tile tile--white compact no-print hidden" id="resumeControls">
   <div class="container">
     <div class="flex between items-center">
-      <p class="caption">이력서에 넣을 경험 선택</p>
+      <p class="caption">이력서에 넣을 경험 선택 · <span class="faint">⠿ 드래그로 순서 변경</span></p>
       <div class="btn-row">
         <button class="chip chip--selectable" onclick="selectAllSel('resume', true)">전체 선택</button>
         <button class="chip chip--selectable" onclick="selectAllSel('resume', false)">전체 해제</button>
@@ -180,43 +183,48 @@ if (requireAuth()) {
   }
   /* 프로필(사진·연락처·학력) */
   function getProfile() { try { return JSON.parse(localStorage.getItem('cda_profile')) || {}; } catch { return {}; } }
-  /* 문서별 경험 선택(이력서·포트폴리오) + 포트폴리오 순서(드래그) */
+  /* 문서별 경험 선택·순서(드래그) — 이력서·포트폴리오 공용 + 대표 이미지 */
   const SEL_KEY = { portfolio: 'cda_portfolio_sel', resume: 'cda_resume_sel' };
+  const ORDER_KEY = { portfolio: 'cda_portfolio_order', resume: 'cda_resume_order' };
   const DOC_KEY = { portfolio: 'cda_doc_portfolio', resume: 'cda_doc_resume' };
   function getSel(type) {
     const raw = localStorage.getItem(SEL_KEY[type]);
     if (raw === null) return items.map(x => x.id);   // 기본: 전체 선택
     try { return JSON.parse(raw) || []; } catch { return items.map(x => x.id); }
   }
-  function getPfOrder() {
+  function getOrder(type) {
     let order = null;
-    try { order = JSON.parse(localStorage.getItem('cda_portfolio_order')); } catch {}
+    try { order = JSON.parse(localStorage.getItem(ORDER_KEY[type])); } catch {}
     const ids = items.map(x => x.id);
     if (!Array.isArray(order)) order = ids.slice();
     order = order.filter(id => ids.includes(id));
     ids.forEach(id => { if (!order.includes(id)) order.push(id); });
     return order;
   }
+  function orderedList(type) {
+    const sel = getSel(type);
+    return getOrder(type).filter(id => sel.includes(id)).map(id => items.find(x => x.id === id)).filter(Boolean);
+  }
   function renderPicker(type) {
     const el = $(type === 'portfolio' ? 'pfPicker' : 'resPicker'); if (!el) return;
     const sel = getSel(type);
-    const drag = type === 'portfolio';
-    const ordered = drag ? getPfOrder().map(id => items.find(x => x.id === id)).filter(Boolean) : items;
+    const ordered = getOrder(type).map(id => items.find(x => x.id === id)).filter(Boolean);
     el.innerHTML = ordered.map(x => `
-      <label class="flex items-center gap-2" style="padding:7px 0;cursor:${drag ? 'grab' : 'pointer'}"
-        ${drag ? `draggable="true" ondragstart="pfDragStart('${x.id}')" ondragover="event.preventDefault()" ondrop="pfDrop('${x.id}')"` : ''}>
-        ${drag ? '<span class="caption" title="드래그해서 순서 변경">⠿</span>' : ''}
+      <div class="flex items-center gap-2" style="padding:7px 0"
+        draggable="true" ondragstart="dragStart('${x.id}')" ondragover="event.preventDefault()" ondrop="itemDrop('${type}','${x.id}')">
+        <span class="caption" style="cursor:grab" title="드래그로 순서 변경">⠿</span>
         <input type="checkbox" ${sel.includes(x.id) ? 'checked' : ''} onchange="toggleSel('${type}','${x.id}',this.checked)">
-        <span><span class="exp-tag" style="font-size:11px;color:var(--color-primary);background:var(--accent-tint);padding:2px 8px;border-radius:999px">${CAT[x.category]?.label || ''}</span>
+        <span style="flex:1"><span class="exp-tag" style="font-size:11px;color:var(--color-primary);background:var(--accent-tint);padding:2px 8px;border-radius:999px">${CAT[x.category]?.label || ''}</span>
         <strong style="margin-left:6px">${x.title}</strong> <span class="caption">· ${x.date}</span></span>
-      </label>`).join('');
+        ${type === 'portfolio' ? `<button type="button" class="chip" onclick="pickExpImage('${x.id}')">${x.image ? '🖼 변경' : '🖼 이미지'}</button>` : ''}
+      </div>`).join('');
   }
   function reDoc(type) { if (cur === type) (type === 'portfolio' ? renderPortfolio() : renderResume()); }
   window.toggleSel = (type, id, checked) => {
     let sel = getSel(type);
     if (checked) { if (!sel.includes(id)) sel.push(id); } else sel = sel.filter(i => i !== id);
     localStorage.setItem(SEL_KEY[type], JSON.stringify(sel));
-    localStorage.removeItem(DOC_KEY[type]);   // 선택 바뀌면 초안 재생성
+    localStorage.removeItem(DOC_KEY[type]);
     reDoc(type);
   };
   window.selectAllSel = (type, all) => {
@@ -225,15 +233,38 @@ if (requireAuth()) {
     renderPicker(type); reDoc(type);
   };
   let _dragId = null;
-  window.pfDragStart = (id) => { _dragId = id; };
-  window.pfDrop = (targetId) => {
+  window.dragStart = (id) => { _dragId = id; };
+  window.itemDrop = (type, targetId) => {
     if (!_dragId || _dragId === targetId) { _dragId = null; return; }
-    const order = getPfOrder().filter(i => i !== _dragId);
+    const order = getOrder(type).filter(i => i !== _dragId);
     order.splice(order.indexOf(targetId), 0, _dragId);
-    localStorage.setItem('cda_portfolio_order', JSON.stringify(order));
-    localStorage.removeItem('cda_doc_portfolio');
+    localStorage.setItem(ORDER_KEY[type], JSON.stringify(order));
+    localStorage.removeItem(DOC_KEY[type]);
     _dragId = null;
+    renderPicker(type); reDoc(type);
+  };
+  /* 경험 대표 이미지 첨부 */
+  function setExpImage(id, dataUrl) {
+    const arr = Store.items; const t = arr.find(x => x.id === id); if (!t) return;
+    t.image = dataUrl; Store.items = arr;                 // 저장
+    const local = items.find(x => x.id === id); if (local) local.image = dataUrl;  // 스냅샷 동기화
+    localStorage.removeItem('cda_doc_portfolio');
     renderPicker('portfolio'); if (cur === 'portfolio') renderPortfolio();
+  }
+  window.pickExpImage = (id) => {
+    const inp = $('expImgInput');
+    inp.onchange = () => {
+      const f = inp.files[0]; if (!f) { return; }
+      const rd = new FileReader();
+      rd.onload = e => { const img = new Image(); img.onload = () => {
+        const w = Math.min(560, img.width), h = Math.round(img.height * (w / img.width));
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(img, 0, 0, w, h);
+        setExpImage(id, cv.toDataURL('image/jpeg', 0.82));
+      }; img.src = e.target.result; };
+      rd.readAsDataURL(f); inp.value = '';
+    };
+    inp.click();
   };
 
   /* 교과(성적) 요약 — 이력서/포트폴리오에 반영 */
@@ -344,8 +375,7 @@ if (requireAuth()) {
 
   /* 이력서 */
   function renderResume() {
-    const sel = getSel('resume');
-    const list = items.filter(x => sel.includes(x.id));
+    const list = orderedList('resume');
     const byCat = {};
     list.forEach(x => { (byCat[x.category] = byCat[x.category] || []).push(x); });
     const topComp = Object.entries(list.flatMap(x => x.competencies).reduce((m, c) => { m[c.name] = (m[c.name] || 0) + 1; return m; }, {}))
@@ -379,16 +409,14 @@ if (requireAuth()) {
     const curBlock = cs ? `<div class="doc-section"><h3>교과 역량</h3>
       <p class="caption">전공·교양 이수에서 드러난 역량 · 평점(GPA) ${cs.gpa}</p>
       <div class="exp-card__chips mt-2">${cs.top.map(t => `<span class="comp-chip">${t.name} ${t.score}점</span>`).join('')}</div></div>` : '';
-    const sel = getSel('portfolio');
-    const order = getPfOrder();
-    const list = order.filter(id => sel.includes(id)).map(id => items.find(x => x.id === id)).filter(Boolean);
+    const list = orderedList('portfolio');
     if (list.length === 0) {
       $('docBody').innerHTML = shell('포트폴리오', `${(getProfile().name || user.name)}의 역량 자산`, [], curBlock + '<p class="muted center mt-5">넣을 경험을 위에서 선택하세요.</p>', getProfile().photo);
       $('counts').textContent = '경험 0건'; applyDoc(); return;
     }
     const body = curBlock + list.map(x => {
       const chips = x.competencies.map(cc => { c++; return `<span class="comp-chip">${cc.name} ${cite(c, { ...cc, from: x.title })}</span>`; }).join('');
-      return `<div class="pf-item"><span class="exp-tag" style="font-size:11px;color:var(--color-primary);background:var(--accent-tint);padding:3px 10px;border-radius:999px">${CAT[x.category]?.label}</span>
+      return `<div class="pf-item">${x.image ? `<img class="pf-img" src="${x.image}" alt="">` : ''}<span class="exp-tag" style="font-size:11px;color:var(--color-primary);background:var(--accent-tint);padding:3px 10px;border-radius:999px">${CAT[x.category]?.label}</span>
         <h3 style="margin-top:8px">${x.title}</h3>
         <p class="caption">${x.date}${x.org ? ` · ${x.org}` : ''}${x.description ? ` · ${x.description}` : ''} · 등록번호 ${x.id}</p>
         <p>${x.star.a}</p>
