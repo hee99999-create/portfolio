@@ -3,91 +3,201 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Career Data Account — 증거 있는 역량 자산</title>
+<title>PORTRI AI — 경험을 역량으로, 역량을 증명으로</title>
 <link rel="stylesheet" href="styles.css">
+<style>
+.hero { padding: clamp(50px,8vh,90px) var(--s-4) clamp(60px,9vh,100px); }
+.hero-grid { display:grid; grid-template-columns:1fr 1.05fr; gap:var(--s-8); align-items:center; }
+.hero h1 { font-size:clamp(2rem,3.6vw,3.1rem); line-height:1.22; letter-spacing:-0.03em; }
+.hero .lead { max-width:42ch; }
+.feat-row { display:flex; gap:var(--s-5); flex-wrap:wrap; margin-top:var(--s-5); }
+.feat { display:flex; align-items:center; gap:10px; font-size:14px; font-weight:500; color:var(--ink-soft); }
+.feat .ic { width:38px; height:38px; border-radius:11px; background:var(--accent-tint); color:var(--color-primary); display:inline-flex; align-items:center; justify-content:center; font-size:18px; }
+
+/* 제품 프리뷰 카드 */
+.preview { background:#fff; border-radius:22px; box-shadow:0 24px 60px rgba(43,38,90,0.16); border:1px solid var(--hairline); padding:18px; }
+.pv-head { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+.pv-ava { width:34px; height:34px; border-radius:50%; background:var(--grad); }
+.pv-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.pv-stat { background:var(--surface-lavender); border-radius:12px; padding:10px 8px; text-align:center; }
+.pv-stat b { display:block; font-size:20px; font-weight:700; color:var(--ink); }
+.pv-stat span { font-size:10.5px; color:var(--ink-faint); }
+.pv-lower { display:grid; grid-template-columns:1.1fr 1fr; gap:10px; margin-top:10px; }
+.pv-box { background:#fff; border:1px solid var(--hairline); border-radius:12px; padding:12px; }
+.pv-rec { background:var(--accent-tint); border:none; }
+
+.cards-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--s-3); }
+.q { font-size:clamp(1.3rem,2.6vw,2rem); line-height:1.4; letter-spacing:-0.02em; font-weight:600; text-align:center; }
+.q .accent { color:var(--color-primary); }
+
+.steps-row { display:grid; grid-template-columns:repeat(5,1fr); gap:var(--s-2); text-align:center; }
+.step-ic { width:60px; height:60px; border-radius:16px; background:var(--surface-lavender); color:var(--color-primary);
+  display:inline-flex; align-items:center; justify-content:center; font-size:26px; margin:0 auto; }
+
+.cmp { display:grid; grid-template-columns:1fr 1fr; gap:var(--s-2); }
+.cmp-col { border-radius:16px; overflow:hidden; border:1px solid var(--hairline); }
+.cmp-col h4 { text-align:center; padding:12px; font-size:15px; }
+.cmp-col.gen h4 { background:var(--surface-lavender); color:var(--ink-soft); }
+.cmp-col.us h4 { background:var(--grad); color:#fff; }
+.cmp-col li { list-style:none; padding:11px 16px; font-size:14px; border-top:1px solid var(--hairline); display:flex; gap:9px; align-items:flex-start; }
+.cmp-col.gen li::before { content:'✕'; color:var(--ink-faint); font-weight:700; }
+.cmp-col.us li::before { content:'✓'; color:var(--color-primary); font-weight:700; }
+
+.donut { width:96px; height:96px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background:conic-gradient(var(--color-primary) 0 92%, var(--pearl-ring) 92% 100%); }
+.donut span { width:70px; height:70px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:17px; }
+.mini-bar { display:grid; grid-template-columns:60px 1fr 40px; align-items:center; gap:8px; margin-top:9px; font-size:12.5px; }
+.mini-track { height:9px; border-radius:99px; background:var(--pearl-ring); }
+.mini-fill { height:9px; border-radius:99px; }
+
+@media(max-width:860px){
+  .hero-grid{grid-template-columns:1fr; gap:var(--s-5)}
+  .cards-4{grid-template-columns:1fr 1fr}
+  .steps-row{grid-template-columns:1fr 1fr 1fr; gap:var(--s-4) var(--s-2)}
+  .cmp{grid-template-columns:1fr}
+}
+@media(max-width:560px){ .cards-4{grid-template-columns:1fr} .steps-row{grid-template-columns:1fr 1fr} .pv-stats{grid-template-columns:1fr 1fr} }
+</style>
 </head>
 <body>
 <nav class="nav" data-nav></nav>
 
 <!-- HERO -->
-<section class="tile tile--white" style="padding-top:var(--s-10);padding-bottom:var(--s-10)">
-  <div class="container">
-    <p class="caption" style="margin-bottom:var(--s-2)">AI 포트폴리오 코치 · v0.1</p>
-    <h1 class="display" style="max-width:14ch">활동 목록이 아니라,<br>증거 있는 역량 자산.</h1>
-    <p class="lead mt-3" style="max-width:52ch">
-      경험의 링크만 붙여넣으세요. AI가 원본에서 역량을 발견하고,
-      <strong>모든 역량을 정확한 인용(증거)과 함께</strong> 자산으로 만듭니다.
-    </p>
-    <div class="btn-row mt-5">
-      <a class="btn btn--primary btn--hero" href="login.html">시작하기</a>
-      <a class="btn btn--ghost btn--hero" href="how-it-works.html">작동 방식</a>
+<section class="tile tile--white hero">
+  <div class="container hero-grid">
+    <div>
+      <span class="eyebrow">대학생을 위한 AI 성장 파트너</span>
+      <h1 class="mt-3">경험은 쌓였는데,<br><span class="accent">내 역량은</span> 왜 설명하기 어려울까요?</h1>
+      <p class="lead mt-3">AI가 당신의 경험을 분석하고, 역량을 발견하고, 다음 성장 방향부터 포트폴리오 완성까지 함께합니다.</p>
+      <div class="btn-row mt-5">
+        <a class="btn btn--grad btn--hero" href="login.html">무료로 시작하기 →</a>
+        <a class="btn btn--ghost btn--hero" href="how-it-works.html">▶ 서비스 둘러보기</a>
+      </div>
+      <div class="feat-row">
+        <span class="feat"><span class="ic">📊</span> AI 역량 분석</span>
+        <span class="feat"><span class="ic">📈</span> 성장 추적</span>
+        <span class="feat"><span class="ic">📄</span> 포트폴리오 자동 완성</span>
+      </div>
     </div>
-  </div>
-</section>
 
-<!-- 샘플 카드 아트팩트 (dark) -->
-<section class="tile tile--dark">
-  <div class="container">
-    <p class="caption" style="color:var(--ink-onDark-soft);margin-bottom:var(--s-3)">추출 예시 — 증거가 붙은 역량</p>
-    <div style="max-width:560px">
-      <div class="exp-card" style="background:#fff;cursor:default">
-        <div class="exp-card__reg">2025-N-0417</div>
-        <div class="exp-card__title">캡스톤 — 지역 소상공인 예약 플랫폼</div>
-        <div class="exp-card__meta">2025.03 – 2025.06 · 팀 리드</div>
-        <div class="exp-card__chips">
-          <span class="comp-chip">문제해결능력 <span class="cite">[1]<span class="cite__tip">사용자 15명 인터뷰로 핵심 페인포인트를 도출했다<span class="src">README.md L23-25</span></span></span></span>
-          <span class="comp-chip">의사소통능력 <span class="cite">[2]<span class="cite__tip">주간 스탠드업으로 이해관계자 피드백을 반영했다<span class="src">commit log</span></span></span></span>
+    <!-- 제품 프리뷰 -->
+    <div class="preview">
+      <div class="pv-head"><span class="pv-ava"></span>
+        <div><div style="font-weight:600;font-size:14px">김포트 님, 오늘도 성장하고 있어요! ✨</div>
+        <div style="font-size:11px;color:var(--ink-faint)">지금까지 24개의 경험을 기록했어요.</div></div></div>
+      <div class="pv-stats">
+        <div class="pv-stat"><b>24</b><span>기록한 경험</span></div>
+        <div class="pv-stat"><b>8</b><span>분석된 역량</span></div>
+        <div class="pv-stat"><b>12</b><span>포트폴리오</span></div>
+        <div class="pv-stat"><b>82</b><span>성장 지수</span></div>
+      </div>
+      <div class="pv-lower">
+        <div class="pv-box">
+          <div style="font-size:11px;font-weight:600;margin-bottom:6px">역량 종합 리포트</div>
+          <svg viewBox="0 0 200 175" style="width:100%;height:auto">
+            <polygon points="100,30 157,72 135,139 65,139 43,72" fill="none" stroke="#E3E0F5" stroke-width="1"/>
+            <polygon points="100,60 128,81 118,120 78,124 71,80" fill="rgba(108,92,231,0.18)" stroke="#6C5CE7" stroke-width="2"/>
+            <text x="100" y="22" text-anchor="middle" font-size="9" fill="#9795AB">문제해결</text>
+            <text x="168" y="72" text-anchor="middle" font-size="9" fill="#9795AB">의사소통</text>
+            <text x="140" y="155" text-anchor="middle" font-size="9" fill="#9795AB">자기관리</text>
+            <text x="58" y="155" text-anchor="middle" font-size="9" fill="#9795AB">전문지식</text>
+            <text x="30" y="72" text-anchor="middle" font-size="9" fill="#9795AB">협업성</text>
+          </svg>
         </div>
-        <div class="exp-card__foot"><span>증거 2건</span><span class="link">[N]에 마우스를 올려보세요</span></div>
+        <div class="pv-box pv-rec">
+          <div style="font-size:11px;font-weight:700;color:var(--color-primary);margin-bottom:5px">AI 성장 추천</div>
+          <div style="font-size:12px;font-weight:600;margin-bottom:4px">자기관리 역량을 더 발전시켜보세요!</div>
+          <div style="font-size:11px;color:var(--ink-soft);line-height:1.5">목표 설정과 시간 관리 경험을 기록하면 성장에 큰 도움이 됩니다.</div>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- 현재의 한계 -->
-<section class="tile tile--parchment">
+<!-- 문제 제기 -->
+<section class="tile tile--lavender">
   <div class="container">
-    <h2>지금의 포트폴리오는 무엇이 문제인가</h2>
-    <div class="grid-2 mt-5">
-      <div><h3>마일리지가 가득 찬 PDF</h3><p class="mt-1">활동의 양은 쌓이지만, 그것이 어떤 역량인지는 아무도 검증하지 않는다.</p></div>
-      <div><h3>자율 입력의 의존</h3><p class="mt-1">학생이 직접 다 써야 하고, 쓰지 않으면 사라진다.</p></div>
-      <div><h3>역량 진단의 분리</h3><p class="mt-1">진단 검사와 실제 활동이 따로 논다. 근거가 연결되지 않는다.</p></div>
-      <div><h3>교수 상담의 빈약함</h3><p class="mt-1">무엇을 근거로 성장을 말할지, 자료가 없다.</p></div>
+    <h2 style="max-width:20ch">당신의 경험,<br>기록만 하고 끝나고 있지 않나요?</h2>
+    <div class="cards-4 mt-5">
+      <div class="card"><div class="icon-tile">📄</div><p class="mt-3" style="color:var(--ink-soft)">활동은 많이 했지만 무엇을 배웠는지 모르겠다</p></div>
+      <div class="card"><div class="icon-tile">✏️</div><p class="mt-3" style="color:var(--ink-soft)">자기소개서를 쓸 때마다 과거 경험을 다시 찾는다</p></div>
+      <div class="card"><div class="icon-tile">📊</div><p class="mt-3" style="color:var(--ink-soft)">내 강점과 부족한 역량을 객관적으로 알기 어렵다</p></div>
+      <div class="card"><div class="icon-tile">❓</div><p class="mt-3" style="color:var(--ink-soft)">포트폴리오를 어떻게 구성해야 할지 모르겠다</p></div>
     </div>
+    <p class="q mt-6">문제는 경험이 부족한 것이 아니라<br><span class="accent">경험이 성장으로 연결되지 않는 것</span>입니다.</p>
   </div>
 </section>
 
-<!-- 작동 방식 -->
+<!-- 프로세스 -->
 <section class="tile tile--white">
-  <div class="container">
-    <h2>AI가 경험에서 역량을 추출합니다</h2>
-    <div class="grid-3 mt-5">
-      <div><p class="caption">01</p><h3 class="mt-1">경험 수집</h3><p class="mt-1">GitHub·블로그·프로젝트 링크를 붙여넣으면 원본을 가져옵니다.</p></div>
-      <div><p class="caption">02</p><h3 class="mt-1">증거 grounding</h3><p class="mt-1">STAR로 분해하고, 원본의 정확한 문장을 증거로 인용합니다.</p></div>
-      <div><p class="caption">03</p><h3 class="mt-1">역량 자산화</h3><p class="mt-1">K-CESA·NCS로 매핑해, 증거가 붙은 역량 카드로 축적합니다.</p></div>
+  <div class="container center">
+    <h2>기록에서 끝나지 않습니다</h2>
+    <p class="muted mt-1">AI가 당신의 성장 여정을 함께합니다</p>
+    <div class="steps-row mt-6">
+      <div><div class="step-ic">✏️</div><h3 class="mt-2" style="font-size:1.05rem">1. 경험 기록</h3><p class="mt-1 muted" style="font-size:13px">수업·프로젝트·대외활동 등 나의 경험을 기록합니다.</p></div>
+      <div><div class="step-ic">🤖</div><h3 class="mt-2" style="font-size:1.05rem">2. AI 역량 분석</h3><p class="mt-1 muted" style="font-size:13px">경험 속에서 핵심역량·행동·성과를 분석합니다.</p></div>
+      <div><div class="step-ic">⭐</div><h3 class="mt-2" style="font-size:1.05rem">3. STAR 구조화</h3><p class="mt-1 muted" style="font-size:13px">흩어진 경험을 활용할 수 있게 구조화합니다.</p></div>
+      <div><div class="step-ic">📈</div><h3 class="mt-2" style="font-size:1.05rem">4. 성장 방향 추천</h3><p class="mt-1 muted" style="font-size:13px">부족한 역량과 다음 활동을 추천합니다.</p></div>
+      <div><div class="step-ic">📄</div><h3 class="mt-2" style="font-size:1.05rem">5. 포트폴리오 완성</h3><p class="mt-1 muted" style="font-size:13px">축적된 데이터로 나만의 포트폴리오를 완성합니다.</p></div>
     </div>
-    <div class="btn-row mt-6"><a class="btn btn--ghost" href="how-it-works.html">자세히 보기</a></div>
   </div>
 </section>
 
-<!-- 신뢰의 토대 -->
-<section class="tile tile--dark-2">
-  <div class="container">
-    <h2>근거 없이 만들어진 자산은, 자산이 아니다</h2>
-    <div class="grid-3 mt-5">
-      <div><h3>증거 기반 추출</h3><p class="mt-1">증거가 없는 역량은 부여하지 않습니다. 할루시네이션을 차단합니다.</p></div>
-      <div><h3>한국 표준 매핑</h3><p class="mt-1">K-CESA 6대 · NCS 10대 직업기초능력 체계로 매핑합니다.</p></div>
-      <div><h3>학생 데이터 통제권</h3><p class="mt-1">데이터의 주인은 학생. 열람·공유를 학생이 결정합니다.</p></div>
+<!-- 비교 -->
+<section class="tile tile--lavender">
+  <div class="container hero-grid" style="align-items:center">
+    <div>
+      <h3 style="font-size:1.3rem;margin-bottom:16px">ChatGPT에 질문하는 것과<br>무엇이 다를까요?</h3>
+      <div class="cmp">
+        <div class="cmp-col gen"><h4>일반 AI</h4><ul>
+          <li>매번 경험을 설명해야 함</li><li>한 번의 답변으로 종료</li><li>사용자가 질문해야 함</li><li>문장 생성에 그침</li></ul></div>
+        <div class="cmp-col us"><h4>PORTRI AI</h4><ul>
+          <li>경험이 지속적으로 축적됨</li><li>성장 과정이 추적됨</li><li>AI가 먼저 분석·제안함</li><li>경험 → 역량 → 성장 연결</li></ul></div>
+      </div>
+    </div>
+    <div>
+      <h2 style="font-size:clamp(1.6rem,3vw,2.3rem);line-height:1.3">우리는 포트폴리오를<br>만들어주는 AI가 아닙니다.</h2>
+      <h2 class="accent mt-2" style="font-size:clamp(1.6rem,3vw,2.3rem);line-height:1.3">당신의 성장을 기록하고<br>증명하는 AI입니다.</h2>
+    </div>
+  </div>
+</section>
+
+<!-- 데이터 -->
+<section class="tile tile--white">
+  <div class="container center">
+    <h2>나의 성장이 데이터가 됩니다</h2>
+    <div class="grid-3 mt-5" style="text-align:left">
+      <div class="card">
+        <div style="font-weight:600;margin-bottom:6px">🧩 AI 경험 분석</div>
+        <p class="muted" style="font-size:13px">팀 프로젝트 갈등을 조정하고 일정을 재설계한 경험에서 <b class="accent">문제해결·협업 역량</b>이 확인되었습니다.</p>
+        <div class="flex" style="justify-content:center;margin:14px 0"><div class="donut"><span>92<small style="font-size:10px">%</small></span></div></div>
+        <p class="caption center">분석 정확도</p>
+      </div>
+      <div class="card">
+        <div style="font-weight:600;margin-bottom:10px">📊 나의 역량 변화</div>
+        <div class="mini-bar"><span>문제해결</span><span class="mini-track"><span class="mini-fill" style="width:82%;background:#4CAF7D"></span></span><span>82%</span></div>
+        <div class="mini-bar"><span>의사소통</span><span class="mini-track"><span class="mini-fill" style="width:74%;background:#3B82C4"></span></span><span>74%</span></div>
+        <div class="mini-bar"><span>협업</span><span class="mini-track"><span class="mini-fill" style="width:89%;background:#2CB8A8"></span></span><span>89%</span></div>
+        <div class="mini-bar"><span>자기관리</span><span class="mini-track"><span class="mini-fill" style="width:61%;background:#6C5CE7"></span></span><span>61%</span></div>
+        <div class="mini-bar"><span>전문지식</span><span class="mini-track"><span class="mini-fill" style="width:76%;background:#E8935A"></span></span><span>76%</span></div>
+      </div>
+      <div class="card">
+        <div style="font-weight:600;margin-bottom:6px">💡 AI 성장 추천</div>
+        <p class="muted" style="font-size:13px">현재 <b class="accent">자기관리역량</b>을 보여줄 경험이 부족합니다. 다음 프로젝트에서 목표 설정과 일정 관리 과정을 기록해보세요.</p>
+        <a class="link link--chevron" href="dashboard.html" style="display:inline-block;margin-top:12px">추천 활동 보기</a>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- CTA -->
-<section class="tile tile--white center">
-  <div class="container prose" style="margin:0 auto">
-    <h2>당신의 경험을 자산으로.</h2>
-    <p class="lead mt-2">AI가 답을 주지 않습니다. 증거로 검증된 것만 자산이 됩니다.</p>
-    <div class="btn-row mt-4" style="justify-content:center"><a class="btn btn--primary btn--hero" href="login.html">시작하기</a></div>
+<section class="tile tile--gradient center" style="padding-top:clamp(60px,10vh,110px);padding-bottom:clamp(60px,10vh,110px)">
+  <div class="container">
+    <h2 style="font-size:clamp(1.7rem,3.4vw,2.6rem)">오늘의 경험이<br>내일의 경쟁력이 됩니다</h2>
+    <p class="mt-2">흩어진 경험을 기록하고, AI와 함께 나만의 성장 스토리를 완성하세요.</p>
+    <div class="btn-row mt-5" style="justify-content:center">
+      <a class="btn btn--onDark btn--hero" href="login.html" style="color:var(--color-primary)">나의 첫 경험 기록하기 →</a>
+    </div>
   </div>
 </section>
 

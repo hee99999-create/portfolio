@@ -5,38 +5,45 @@
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css');
 
 :root {
-  /* ---- Color: 웜 에디토리얼 — 크림 + 코랄/살구 ---- */
-  --color-primary: #e75f3a;         /* Coral — 모든 인터랙션 */
-  --color-primary-press: #cf4f2c;
-  --color-link-dark: #f2a074;       /* Apricot — 어두운 타일 위 링크 전용 */
+  /* ---- Color: PORTRI AI — 퍼플/라벤더 SaaS ---- */
+  --color-primary: #6C5CE7;         /* Indigo-violet — 모든 인터랙션 */
+  --color-primary-press: #5A48D6;
+  --color-link-dark: #B9AEF9;       /* 어두운 타일 위 링크 */
+  --grad: linear-gradient(135deg, #6C5CE7 0%, #8B7BF2 100%);
 
-  /* accent tints (rgba — 하드코딩 대체용) */
-  --accent-tint: rgba(231,95,58,0.12);
-  --accent-tint-strong: rgba(231,95,58,0.20);
-  --accent-tint-soft: rgba(231,95,58,0.07);
-  --accent-ring: rgba(231,95,58,0.16);
-  --accent-glow: rgba(231,95,58,0.34);
+  /* accent tints */
+  --accent-tint: rgba(108,92,231,0.10);
+  --accent-tint-strong: rgba(108,92,231,0.18);
+  --accent-tint-soft: rgba(108,92,231,0.06);
+  --accent-ring: rgba(108,92,231,0.20);
+  --accent-glow: rgba(108,92,231,0.35);
 
-  /* Surfaces — 웜 페이퍼/크림 */
-  --surface-white: #faf8f3;         /* 웜 본(bone) */
-  --surface-parchment: #efe9dd;     /* 크림 */
-  --tile-dark-1: #2a2521;           /* 웜 에스프레소 다크 (C 무드 절충) */
-  --tile-dark-2: #2e2823;
-  --tile-dark-3: #26211d;
-  --void-black: #1c1814;            /* 글로벌 nav — 웜 잉크 블랙 */
+  /* Surfaces */
+  --surface-white: #ffffff;
+  --surface-parchment: #F3F1FD;     /* 라벤더 섹션 */
+  --surface-lavender: #F3F1FD;
+  --tile-dark-1: #2A2740;           /* 딥 퍼플 그레이 */
+  --tile-dark-2: #2E2B47;
+  --tile-dark-3: #26233B;
+  --void-black: #ffffff;            /* 글로벌 nav — 화이트 */
 
-  /* Ink / text — 웜 near-black */
-  --ink: #2b2620;
-  --ink-soft: #6b6155;
-  --ink-faint: #8c8272;             /* 캡션, 미세 텍스트 */
-  --ink-onDark: #f2ece1;
-  --ink-onDark-soft: #b6ab98;
+  /* Ink / text */
+  --ink: #23222E;
+  --ink-soft: #5B5A6E;
+  --ink-faint: #9795AB;
+  --ink-onDark: #F3F1FD;
+  --ink-onDark-soft: #B9B4D6;
 
   /* Lines */
-  --hairline: #e5ddd0;              /* 유틸리티 카드 1px */
-  --pearl-ring: #efe7da;            /* pearl 캡슐 3px soft ring */
+  --hairline: #E9E7F4;
+  --pearl-ring: #F0EEFA;
+
+  /* Soft shadows (SaaS) */
+  --shadow-card: 0 4px 24px rgba(43,38,90,0.07);
+  --shadow-card-hover: 0 12px 36px rgba(108,92,231,0.15);
 
   /* Elevation — 시스템 전체 단 하나의 그림자 (이미지 전용) */
   --shadow-product: rgba(0,0,0,.22) 3px 5px 30px;
@@ -52,10 +59,10 @@
   --s-5: 40px; --s-6: 48px;  --s-8: 64px;  --s-10: 80px;
 
   /* Type */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-serif: 'Newsreader', Georgia, serif;   /* 아카이브 헤드라인 악센트 */
+  --font-sans: 'Inter', 'Pretendard Variable', Pretendard, system-ui, -apple-system, sans-serif;
+  --font-serif: 'Newsreader', 'Pretendard Variable', Georgia, serif;   /* 아카이브 헤드라인 악센트 */
 
-  --nav-h: 44px;
+  --nav-h: 64px;
   --subnav-h: 52px;
   --container: 1180px;
 }
@@ -104,6 +111,21 @@ h3, .h3 { font-weight: 600; letter-spacing: -0.02em;
 .muted { color: var(--ink-soft); }
 .faint { color: var(--ink-faint); }
 .serif { font-family: var(--font-serif); }
+.accent { color: var(--color-primary); }
+
+/* ---- 랜딩 유틸리티 (PORTRI AI) ---- */
+.eyebrow { display: inline-block; background: var(--accent-tint); color: var(--color-primary);
+  font-size: 13px; font-weight: 600; padding: 7px 15px; border-radius: var(--r-pill); letter-spacing: -0.01em; }
+.btn--grad { background: var(--grad); color: #fff; box-shadow: 0 6px 18px var(--accent-glow); }
+.btn--grad:hover { text-decoration: none; opacity: 0.94; }
+.tile--lavender { background: var(--surface-lavender); color: var(--ink); }
+.tile--gradient { background: var(--grad); color: #fff; }
+.tile--gradient h1, .tile--gradient h2, .tile--gradient h3 { color: #fff; }
+.tile--gradient p { color: rgba(255,255,255,0.88); }
+.icon-tile { width: 52px; height: 52px; border-radius: 14px; background: var(--accent-tint);
+  color: var(--color-primary); display: inline-flex; align-items: center; justify-content: center; font-size: 24px; }
+.soft-card { background: #fff; border-radius: 18px; box-shadow: var(--shadow-card);
+  border: 1px solid var(--hairline); padding: var(--s-4); }
 
 /* ============================================================
    Layout primitives
@@ -128,19 +150,39 @@ h3, .h3 { font-weight: 600; letter-spacing: -0.02em;
    ============================================================ */
 .nav {
   position: sticky; top: 0; z-index: 100;
-  height: var(--nav-h);
-  background: var(--void-black);
-  color: #fff;
+  min-height: 64px;
+  background: rgba(255,255,255,0.85);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
+  backdrop-filter: saturate(180%) blur(16px);
+  color: var(--ink);
   display: flex; align-items: center;
-  padding: 0 var(--s-3);
+  padding: 0 var(--s-4);
+  border-bottom: 1px solid var(--hairline);
 }
-.nav__brand { font-weight: 600; font-size: 15px; letter-spacing: -0.01em; color: #fff; }
-.nav__brand:hover { text-decoration: none; opacity: 0.85; }
-.nav__links { display: flex; gap: var(--s-3); margin-left: var(--s-5); }
-.nav__link { font-size: 12px; font-weight: 400; color: #c8c8cc; letter-spacing: 0; }
-.nav__link:hover { color: #fff; text-decoration: none; }
-.nav__link.active { color: #fff; }
+.nav__brand { font-weight: 700; font-size: 19px; letter-spacing: -0.02em; color: var(--ink);
+  display: inline-flex; align-items: center; gap: 9px; }
+.nav__brand:hover { text-decoration: none; opacity: 0.9; }
+.nav__brand .mark { width: 30px; height: 30px; border-radius: 9px; background: var(--grad);
+  color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; }
+.nav__brand .ai { color: var(--color-primary); }
+.nav__menu { display: flex; align-items: center; gap: var(--s-4); margin-left: var(--s-6); flex: 1; }
+.nav__links { display: flex; gap: var(--s-4); }
+.nav__link { font-size: 15px; font-weight: 500; color: var(--ink-soft); letter-spacing: -0.01em; transition: color .12s ease; }
+.nav__link:hover { color: var(--color-primary); text-decoration: none; }
+.nav__link.active { color: var(--color-primary); }
 .nav__right { margin-left: auto; display: flex; align-items: center; gap: var(--s-2); }
+.nav__toggle { display: none; background: none; border: none; color: var(--ink); font-size: 22px; line-height: 1; margin-left: auto; padding: 6px; }
+@media (max-width: 720px) {
+  .nav__toggle { display: block; }
+  .nav__menu { display: none; position: absolute; top: 64px; left: 0; right: 0;
+    flex-direction: column; align-items: stretch; gap: 0; margin: 0;
+    background: #fff; padding: 8px 16px 18px; z-index: 200;
+    border-bottom: 1px solid var(--hairline); box-shadow: var(--shadow-card); }
+  .nav.open .nav__menu { display: flex; }
+  .nav__links { flex-direction: column; gap: 0; }
+  .nav__link { padding: 13px 2px; border-bottom: 1px solid var(--hairline); font-size: 16px; }
+  .nav__right { margin: 14px 0 0; }
+}
 
 /* Sub-nav — 52px 프로스트 스티키 스트립 */
 .subnav {
@@ -187,9 +229,9 @@ h3, .h3 { font-weight: 600; letter-spacing: -0.02em;
 /* ============================================================
    Cards & Chips
    ============================================================ */
-/* Utility card — 헤어라인 18px 라운드 */
-.card { background: var(--surface-white); border: 1px solid var(--hairline);
-  border-radius: var(--r-card); padding: var(--s-3); }
+/* Utility card — soft shadow SaaS */
+.card { background: #fff; border: 1px solid var(--hairline);
+  border-radius: 16px; padding: var(--s-3); box-shadow: var(--shadow-card); }
 .card__media { border-radius: var(--r-compact); overflow: hidden; aspect-ratio: 1/1;
   background: var(--surface-parchment); }
 
@@ -216,13 +258,14 @@ h3, .h3 { font-weight: 600; letter-spacing: -0.02em;
    ============================================================ */
 .cite {
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 0.62em; font-weight: 600; vertical-align: super;
-  color: var(--color-primary); background: var(--accent-tint);
-  border-radius: var(--r-pill); min-width: 1.4em; height: 1.4em;
-  padding: 0 0.35em; margin-left: 3px; cursor: help;
-  position: relative;
+  font-size: 0.64em; font-weight: 700; vertical-align: super;
+  color: var(--color-primary-press); background: var(--accent-tint-strong);
+  box-shadow: inset 0 0 0 1px rgba(207,79,44,0.28);
+  border-radius: var(--r-pill); min-width: 1.5em; height: 1.5em;
+  padding: 0 0.4em; margin-left: 3px; cursor: help;
+  position: relative; transition: background .12s ease;
 }
-.cite:hover { background: var(--accent-tint-strong); }
+.cite:hover { background: var(--color-primary); color: #fff; box-shadow: none; }
 /* 증거 툴팁 */
 .cite__tip {
   position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
@@ -286,9 +329,10 @@ h3, .h3 { font-weight: 600; letter-spacing: -0.02em;
   gap: var(--s-3); }
 
 /* 경험(역량 자산) 카드 — 도서 색인 카드 느낌 */
-.exp-card { background: #fff; border: 1px solid var(--hairline); border-radius: var(--r-card);
-  padding: var(--s-3); cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
-.exp-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.06); }
+.exp-card { background: #fff; border: 1px solid var(--hairline); border-radius: 16px;
+  padding: var(--s-3); cursor: pointer; box-shadow: var(--shadow-card);
+  transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.exp-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-card-hover); }
 .exp-card__reg { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.02em; }
 .exp-card__title { font-size: 1.15rem; font-weight: 600; letter-spacing: -0.01em; margin: 8px 0 4px; }
 .exp-card__meta { font-size: 13px; color: var(--ink-faint); margin-bottom: 14px; }
@@ -367,7 +411,6 @@ h3, .h3 { font-weight: 600; letter-spacing: -0.02em;
    Responsive
    ============================================================ */
 @media (max-width: 720px) {
-  .nav__links { display: none; }
   .grid-2, .grid-3, .star-grid { grid-template-columns: 1fr; }
   .tile { padding: var(--s-6) var(--s-3); }
   .footer__cols { gap: var(--s-4); }

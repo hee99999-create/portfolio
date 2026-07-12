@@ -186,8 +186,12 @@ function mountNav(active) {
   const right = Session.loggedIn
     ? `<span class="nav__link">${Session.user.name}</span><a class="nav__link" href="#" onclick="Session.logout();location.href='home.html';return false">로그아웃</a>`
     : `<a class="btn btn--primary" style="padding:5px 16px;font-size:13px" href="login.html">시작하기</a>`;
-  el.innerHTML = `<a class="nav__brand" href="home.html">Career Data Account</a>
-    <div class="nav__links">${links}</div><div class="nav__right">${right}</div>`;
+  el.innerHTML = `<a class="nav__brand" href="home.html"><span class="mark">P</span>PORTRI&nbsp;<span class="ai">AI</span></a>
+    <button class="nav__toggle" aria-label="메뉴 열기" onclick="this.closest('.nav').classList.toggle('open')">☰</button>
+    <div class="nav__menu">
+      <div class="nav__links">${links}</div>
+      <div class="nav__right">${right}</div>
+    </div>`;
 }
 function mountFooter() {
   const el = document.querySelector('[data-footer]'); if (!el) return;
