@@ -20,6 +20,35 @@
 
 ---
 
+## 0-1. 제품 철학 (2026-07 개정 — 증거 기반 역량 성장 시스템)
+
+> ⚠️ **기존의 "AI가 K-CESA 역량을 0~100점으로 평가하고 다른 학생 평균과 비교하는 시스템"은 폐기됨.**
+> 이제 PORTRI AI는 학생이 등록한 경험에서 **검증 가능한 증거를 발견하고, 그 증거의 축적·성장**을 보여준다.
+
+**반드시 지켜야 할 6대 원칙 (모든 데이터/계산/UI/문구에 반영):**
+
+1. **PORTRI AI는 학생의 역량 자체를 평가하지 않는다.**
+2. **등록된 경험에서 검증 가능한 Evidence를 발견하고 축적한다.**
+3. **역량 증거지수(Evidence Index)는 K-CESA 공식 진단점수가 아니다.**
+4. **다른 학생과 비교하지 않고, 과거의 나와 현재의 나를 비교한다.**
+5. **Evidence가 부족하다는 것은 학생의 역량이 부족하다는 의미가 아니다.** ("부족한 역량" 표현 금지)
+6. **모든 역량 분석과 성장 코칭은 등록된 경험과 검증 Evidence를 근거로 한다.**
+
+**금지 표현**: 나의 역량 점수 · K-CESA 점수 · 학과평균 · 동일학년 평균 · 다른 학생과의 비교 · 부족한 역량.
+**대체 표현(수준)**: 아직 발견되지 않음 · 증거 필요 · 성장 중 · 강함 · 매우 강함.
+
+**역량 증거지수 구조** (`app.js`, config로 분리 — 교육학 공식 아님, MVP 가설):
+- 5개 하위지표 = 증거량(25%) · 증거 강도(30%) · 경험 다양성(20%) · 지속성(15%) · 최근성(10%)
+- `EVIDENCE_INDEX_WEIGHTS`, `EVIDENCE_QUANTITY_STEPS`, `STRENGTH_LEVELS`, `DIVERSITY_STEPS`,
+  `CONTINUITY_STEPS`, `RECENCY_BANDS`, `EVIDENCE_LEVELS` 로 분리. 독립 함수:
+  `calculateEvidenceQuantity/Strength/ExperienceDiversity/Continuity/Recency/EvidenceIndex`,
+  `evidenceIndexFor()`, `evidenceIndexAll()`, `levelOf()`, `parseExperienceDate()`, `termOf()`.
+- 증거 강도(evidenceStrength 1~4)는 각 evidence에 저장되며, **반드시 원문 인용에 근거**해 판정한다.
+- "과거의 나"는 **경험 발생일 기준으로 6개월 전까지 존재했던 경험만 필터링**해 재계산한다(별도 스냅샷 DB 없음).
+  과거 데이터가 없으면 **가짜 데이터를 만들지 않고** 현재만 표시 + 안내한다.
+
+---
+
 ## 1. 제품 개념 (What it is)
 
 학생이 자신의 경험 **링크를 붙여넣으면** →

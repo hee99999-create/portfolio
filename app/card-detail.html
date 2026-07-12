@@ -75,16 +75,21 @@ if (requireAuth()) {
       : (x.files.length ? '📎 증빙자료: ' + x.files.join(', ') : '증빙자료 첨부됨');
     $('starS').textContent = x.star.s; $('starT').textContent = x.star.t;
     $('starA').textContent = x.star.a; $('starR').textContent = x.star.r;
-    $('compList').innerHTML = x.competencies.map((c, i) => `
+    $('compList').innerHTML = x.competencies.map((c, i) => {
+      const lvl = Math.min(4, Math.max(1, c.evidenceStrength || 2));
+      const s = (typeof STRENGTH_LEVELS !== 'undefined') ? STRENGTH_LEVELS[lvl] : { label: '', desc: '' };
+      return `
       <div class="card mt-2">
         <div class="flex between items-center">
-          <div><strong>${c.name}</strong> <span class="caption">K-CESA · 기여도 ${c.pct}%</span></div>
-          <span class="comp-chip">신뢰도 ${c.confidence}/5</span>
+          <div><strong>${c.name}</strong> <span class="caption">K-CESA 역량 증거</span></div>
+          <span class="comp-chip">증거 강도 ${lvl}단계 · ${s.label}</span>
         </div>
         <p class="mt-2" style="color:var(--ink-soft)">“${c.evidence}”
           <span class="cite">[${i + 1}]<span class="cite__tip">${c.evidence}<span class="src">${c.src}</span></span></span></p>
+        <p class="fine mt-1">강도 근거: ${c.strengthReason || s.desc}</p>
         <p class="fine mt-1">출처: ${c.src}</p>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 }
 </script>

@@ -44,10 +44,14 @@ app.add_middleware(
 KCESA = ["자기관리", "대인관계", "자원·정보·기술활용", "글로벌", "의사소통", "종합적사고력"]
 
 SYSTEM_PROMPT = (
-    "당신은 학생의 경험에서 역량을 추출하는 코치입니다. "
-    "반드시 원본 텍스트의 정확한 인용(evidence)을 근거로만 역량을 부여합니다. "
-    "인용은 원문에 실제로 존재하는 문장이어야 합니다(요약·창작 금지). "
+    "당신은 학생의 경험에서 '검증 가능한 역량 증거'를 발견하는 코치입니다. "
+    "학생의 역량 자체를 평가하지 않습니다. 오직 원본 텍스트에 실제로 존재하는 "
+    "정확한 인용(evidence)을 근거로만 역량을 연결합니다(요약·창작 금지). "
     "증거가 없는 역량은 절대 포함하지 마세요. 추측하지 마세요. "
+    "각 증거에는 강도(evidenceStrength)를 1~4단계로 매기되, 반드시 인용된 원문 내용에만 근거해 판단하고, "
+    "그 이유(strength_reason)를 원문에 나타난 사실로 설명하세요. 근거 없는 강도 평가는 금지합니다. "
+    "강도 기준 — 1: 단순 참여/언급, 2: 구체적 행동 확인, "
+    "3: 주도적 행동·문제해결·협업·의사결정 확인, 4: 구체적 행동과 측정 가능한 결과·성과가 함께 확인. "
     "역량명은 반드시 K-CESA 6대 핵심역량 중에서만 선택합니다: " + ", ".join(KCESA) + "."
 )
 
@@ -82,9 +86,11 @@ EXTRACT_FUNCTION = {
                             "name": {"type": "string", "enum": KCESA},
                             "confidence": {"type": "integer", "enum": [1, 2, 3, 4, 5]},
                             "evidence": {"type": "string", "description": "원문에서 그대로 인용한 문장"},
+                            "evidenceStrength": {"type": "integer", "enum": [1, 2, 3, 4], "description": "1:단순참여 2:구체적행동 3:주도·문제해결 4:성과입증 (인용 원문 근거로만 판단)"},
+                            "strength_reason": {"type": "string", "description": "그 강도로 판단한 이유 — 원문에 나타난 사실로 설명"},
                             "source_ref": {"type": "string", "description": "인용 위치(예: README.md, 3번째 문단)"},
                         },
-                        "required": ["name", "confidence", "evidence", "source_ref"],
+                        "required": ["name", "confidence", "evidence", "evidenceStrength", "strength_reason", "source_ref"],
                     },
                 },
             },
@@ -212,8 +218,8 @@ ADVISE_FUNCTION = {
                         "required": ["role", "why"],
                     },
                 },
-                "gaps": {"type": "array", "items": {"type": "string"}, "description": "부족하거나 약한 점"},
-                "next_actions": {"type": "array", "items": {"type": "string"}, "description": "다음에 쌓으면 좋을 활동"},
+                "gaps": {"type": "array", "items": {"type": "string"}, "description": "증거가 더 필요한 역량(능력 부족이 아니라 아직 기록·증거가 적은 영역)"},
+                "next_actions": {"type": "array", "items": {"type": "string"}, "description": "그 역량의 증거를 만들 수 있는 다음 경험"},
                 "encouragement": {"type": "string", "description": "한 줄 응원"},
             },
             "required": ["strengths", "careers", "gaps", "next_actions", "encouragement"],
@@ -235,12 +241,14 @@ def advise(req: AdviseRequest):
             messages=[
                 {"role": "system", "content": (
                     "당신은 대학생의 진로·취업을 돕는 따뜻하지만 솔직한 선배입니다. "
-                    "학생의 누적 활동과 K-CESA 역량 데이터에 근거해서만 조언하고, "
-                    "데이터에 없는 사실은 지어내지 않습니다. 구체적이고 실행 가능하게 말합니다."
+                    "학생의 누적 경험에서 발견된 검증 가능한 역량 증거(역량 증거지수)에 근거해서만 조언하고, "
+                    "데이터에 없는 사실은 지어내지 않습니다. 학생의 능력이 부족하다고 단정하지 말고, "
+                    "'증거가 아직 적은 역량'으로 표현하세요. 구체적이고 실행 가능하게 말합니다."
                 )},
                 {"role": "user", "content": (
-                    "다음은 한 학생의 프로필입니다. 강점 요약, 추천 진로/직무 2~3개(각 근거), "
-                    "부족한 점, 다음에 쌓으면 좋을 활동, 한 줄 응원을 알려주세요.\n\n" + profile
+                    "다음은 한 학생의 역량 증거 프로필입니다(index=역량 증거지수, level=수준). "
+                    "강점 요약, 추천 진로/직무 2~3개(각 근거), 증거가 더 필요한 역량, "
+                    "그 증거를 만들 다음 경험, 한 줄 응원을 알려주세요.\n\n" + profile
                 )},
             ],
             tools=[ADVISE_FUNCTION],

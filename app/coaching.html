@@ -20,7 +20,7 @@
   <div class="container prose">
     <p class="caption">AI 선배 · 진로 코칭</p>
     <h1 style="font-size:clamp(1.7rem,3.3vw,2.5rem)">너의 활동을 보니, 이런 길이 보여</h1>
-    <p class="lead mt-2">누적한 활동과 K-CESA 역량을 통째로 분석해서, 앞으로의 진로·취업 방향을 짚어줄게.</p>
+    <p class="lead mt-2">누적한 경험에서 발견된 검증 가능한 역량 증거를 통째로 분석해서, 앞으로의 진로·취업 방향을 짚어줄게.</p>
   </div>
 </section>
 
@@ -47,7 +47,7 @@ mountNav('competency'); mountFooter();
 if (requireAuth()) {
   Store.seedIfEmpty();
   const items = Store.items;
-  const agg = aggregateKCESA();
+  const all = evidenceIndexAll(items, null, new Date());
   const $ = s => document.getElementById(s);
 
   if (items.length === 0) {
@@ -55,13 +55,13 @@ if (requireAuth()) {
     $('empty').classList.remove('hidden');
   } else {
     const profile = {
-      competencies: agg.labels.map((l, i) => ({ name: l, score: agg.mine[i] })),
+      competencies: all.map(c => ({ name: c.name, index: c.index, level: c.level.label, evidence: c.evidenceCount })),
       categories: CATEGORIES.map(c => ({ label: c.label, count: Store.byCategory(c.key).length })).filter(x => x.count > 0),
       experiences: items.map(x => ({ title: x.title, category: CAT[x.category]?.label })),
     };
     (async () => {
       const ai = await adviseBackend(profile);      // 백엔드 있으면 실제 AI
-      const a = ai || careerAdviceMock(agg, items); // 없으면 규칙 기반
+      const a = ai || careerAdviceMock(all, items); // 없으면 규칙 기반
       $('engineNote').textContent = ai ? '🟢 AI 분석' : '⚪ 규칙 기반(백엔드 꺼짐)';
       $('engineNote').style.color = ai ? '#2e7d46' : 'var(--ink-faint)';
       render(a);
@@ -82,7 +82,7 @@ if (requireAuth()) {
       <div class="grid-2 mt-2">${careers}</div>
 
       <div class="grid-2 mt-4">
-        <div class="soft-card"><div class="caption">지금 부족한 것</div>${gaps}</div>
+        <div class="soft-card"><div class="caption">증거가 더 필요한 역량</div>${gaps}</div>
         <div class="soft-card"><div class="caption">다음에 쌓으면 좋을 것</div>${acts}</div>
       </div>
 
