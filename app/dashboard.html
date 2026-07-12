@@ -238,8 +238,8 @@ const CATEGORY_FIELDS = {
   volunteer: [_txt('fTitle', '활동명', '예: 지역아동센터 멘토링'), _txt('fOrg', '기관', '봉사기관'), _period('봉사기간'), _hours('봉사시간')],
   award:     [_txt('fTitle', '대회 / 공모전명', '예: OO 해커톤'), _txt('fDetail', '수상내역', '예: 대상 / 우수상 / 입상'), _sel('fPtype', '참여 형태', ['개인', '팀']), _txt('fOrg', '발행기관', '주최 / 발행 기관'), _date('fDate', '수상일')],
   education: [_txt('fTitle', '교육 / 연수명', '예: 데이터 분석 부트캠프'), _txt('fOrg', '교육기관', '주관기관'), _txt('fPlace', '교육장소', '예: 온라인 / OO센터'), _period('교육기간'), _hoursOnly('교육시간'), _txt('fContent', '교육내용', '배운 내용 · 과정 요약')],
-  club:      [_txt('fTitle', '활동명', '예: 총학생회 / 로봇동아리'), _txt('fOrg', '단체 · 역할', '예: 기획부장'), _period('활동기간')],
-  research:  [_txt('fTitle', '연구 / 논문명'), _txt('fOrg', '게재처 · 기관'), _date('fDate', '발표 / 게재일')],
+  club:      [_txt('fTitle', '동아리명', '예: 로봇공학회'), _period('활동기간'), _txt('fContent', '활동내용', '주요 활동 요약'), _txt('fOrg', '직위', '예: 회장 / 기획부장')],
+  research:  [_txt('fTitle', '논문제목'), _txt('fOrg', '학술지명'), _txt('fVol', '권(호,집)', '예: 12(3)'), _date('fDate', '게재일자'), _txt('fPages', '게재쪽수', '예: 45-52'), _txt('fJtype', '학술지구분', '예: KCI / SCI')],
   project:   [_txt('fTitle', '프로젝트명'), _txt('fOrg', '소속 · 역할'), _period('프로젝트 기간')],
   etc:       [_txt('fTitle', '제목'), _txt('fOrg', '기관 / 설명'), _date('fDate', '일자')],
 };
@@ -261,9 +261,11 @@ function renderFields() {
     return `<label class="label mt-2">${f.label}</label><input class="field" id="${f.id}" type="text" placeholder="${f.ph || ''}" style="height:48px">`;
   }).join('');
 }
-/* 표시된 필드에서 값 수집 → {title, org, date, description} */
+/* 표시된 필드(카테고리 설정)에서 값 수집 → {title, org, date, description} */
 function collectFields() {
   const v = id => (document.getElementById(id)?.value || '').trim();
+  const spec = CATEGORY_FIELDS[document.getElementById('catSelect').value] || [];
+  // 날짜: 단일(fDate) 또는 기간(fStart~fEnd) + 시간(fHours/fMin)
   let date = v('fDate');
   if (!date) {
     const s = v('fStart'), e = v('fEnd');
@@ -271,12 +273,20 @@ function collectFields() {
     const hrs = v('fHours'), min = v('fMin');
     if (hrs || min) date = (date ? date + ' · ' : '') + `${hrs || 0}시간${min ? ' ' + min + '분' : ''}`;
   }
+  // 제목/기관/설명: 설정에 정의된 text·select 필드에서 자동 수집
+  let title = '', org = '';
   const parts = [];
-  if (v('fDetail')) parts.push(v('fDetail'));
-  if (v('fContent')) parts.push(v('fContent'));
-  if (v('fPtype')) parts.push(v('fPtype') + ' 참여');
-  if (v('fPlace')) parts.push('장소: ' + v('fPlace'));
-  return { title: v('fTitle'), org: v('fOrg'), date: date || '2025', description: parts.join(' · ') };
+  spec.forEach(f => {
+    if (f.type !== 'text' && f.type !== 'select') return;
+    const val = v(f.id);
+    if (!val) return;
+    if (f.id === 'fTitle') title = val;
+    else if (f.id === 'fOrg') org = val;
+    else if (f.id === 'fPtype') parts.push(val + ' 참여');
+    else if (f.id === 'fDetail' || f.id === 'fContent') parts.push(val);
+    else parts.push(`${f.label}: ${val}`);
+  });
+  return { title, org, date: date || '2025', description: parts.join(' · ') };
 }
 async function startAnalysis() {
   document.getElementById('inputView').classList.add('hidden');
