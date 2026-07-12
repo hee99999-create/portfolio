@@ -98,13 +98,12 @@
       <!-- 파일/직접 모드 -->
       <div id="modeFile" class="mt-3 hidden">
         <label class="label">카테고리 (필수)</label>
-        <select class="select" id="catSelect" style="width:100%" onchange="checkReady()">
+        <select class="select" id="catSelect" style="width:100%" onchange="onCatChange()">
           <option value="">선택하세요</option>
         </select>
-        <div class="grid-2 mt-2">
-          <div><label class="label">제목</label><input class="field" id="fTitle" placeholder="예: TOEIC 960" style="height:48px"></div>
-          <div><label class="label">취득일</label><input class="field" id="fDate" type="text" placeholder="YYYY-MM-DD" style="height:48px"></div>
-        </div>
+        <div class="mt-2"><label class="label">제목</label>
+          <input class="field" id="fTitle" placeholder="예: TOEIC 960 / 캡스톤 프로젝트" style="height:48px"></div>
+        <div id="dateArea" class="mt-2"></div>
         <div class="mt-2"><label class="label">기관 / 설명</label>
           <input class="field" id="fOrg" placeholder="발급기관 또는 한 줄 설명" style="height:48px"></div>
         <div class="mt-2">
@@ -202,6 +201,8 @@ function openModal() {
   setMode('link'); picked = [];
   document.getElementById('urlInput').value = '';
   document.getElementById('fileNames').textContent = '다중 선택 가능. 첨부하면 역량을 분석합니다.';
+  document.getElementById('catSelect').value = '';
+  renderDateFields();
   setTimeout(() => document.getElementById('urlInput').focus(), 50);
   checkReady();
 }
@@ -226,6 +227,41 @@ function checkReady() {
   else ok = document.getElementById('catSelect').value !== '' && picked.length > 0;
   document.getElementById('analyzeBtn').disabled = !ok;
 }
+function onCatChange() { renderDateFields(); checkReady(); }
+/* 카테고리별 날짜/시간 입력 필드 */
+function renderDateFields() {
+  const area = document.getElementById('dateArea');
+  if (!area) return;
+  const cat = document.getElementById('catSelect').value;
+  const periodRow = (a, b) =>
+    `<div class="grid-2"><input class="field" id="${a}" type="text" placeholder="YYYY-MM-DD" style="height:48px">`
+    + `<input class="field" id="${b}" type="text" placeholder="YYYY-MM-DD" style="height:48px"></div>`;
+  if (cat === 'volunteer') {
+    area.innerHTML =
+      `<label class="label">봉사기간</label>${periodRow('fStart', 'fEnd')}`
+      + `<label class="label mt-2">봉사시간</label>`
+      + `<div class="flex gap-2 items-center">`
+      + `<input class="field" id="fHours" type="number" min="0" placeholder="0" style="height:48px;width:90px"><span class="caption">시간</span>`
+      + `<input class="field" id="fMin" type="number" min="0" max="59" placeholder="0" style="height:48px;width:90px"><span class="caption">분</span></div>`;
+  } else if (['', 'cert', 'language', 'award'].includes(cat)) {
+    area.innerHTML = `<label class="label">취득일</label>`
+      + `<input class="field" id="fDate" type="text" placeholder="YYYY-MM-DD" style="height:48px">`;
+  } else {
+    area.innerHTML = `<label class="label">활동기간</label>${periodRow('fStart', 'fEnd')}`;
+  }
+}
+/* 현재 표시된 필드에서 날짜(표시용 문자열) 수집 */
+function collectDate() {
+  const d = document.getElementById('fDate');
+  if (d) return d.value.trim() || '2025';
+  const s = document.getElementById('fStart')?.value.trim();
+  const e = document.getElementById('fEnd')?.value.trim();
+  let str = (s || e) ? `${s || '?'} ~ ${e || '?'}` : '2025';
+  const hrs = document.getElementById('fHours')?.value.trim();
+  const min = document.getElementById('fMin')?.value.trim();
+  if (hrs || min) str += ` · ${hrs || 0}시간${min ? ' ' + min + '분' : ''}`;
+  return str;
+}
 async function startAnalysis() {
   document.getElementById('inputView').classList.add('hidden');
   document.getElementById('progressView').classList.remove('hidden');
@@ -243,7 +279,7 @@ async function startAnalysis() {
     const org = document.getElementById('fOrg').value.trim();
     payload = { text: (title + ' ' + org).trim(), category: cat, title };
     meta = { source: 'file', category: cat, url: '', files: picked, title,
-             date: document.getElementById('fDate').value.trim() || '2025', org };
+             date: collectDate(), org };
   }
   const backendPromise = analyzeBackend(payload);   // 백엔드 없으면 null
 
