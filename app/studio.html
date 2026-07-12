@@ -19,6 +19,11 @@
 .res-date { color:var(--ink-faint); font-size:14px; }
 .pf-item { padding:var(--s-3) 0; border-bottom:1px solid var(--pearl-ring); }
 .pf-img { width:100%; max-height:320px; object-fit:cover; border-radius:12px; border:1px solid var(--hairline); margin-bottom:12px; }
+.pf-gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; margin-bottom:12px; }
+.pf-gallery img { width:100%; height:140px; object-fit:cover; border-radius:10px; border:1px solid var(--hairline); }
+.thumb { position:relative; display:inline-block; }
+.thumb img { width:52px; height:52px; object-fit:cover; border-radius:6px; border:1px solid var(--hairline); display:block; }
+.thumb button { position:absolute; top:-6px; right:-6px; width:18px; height:18px; border-radius:50%; border:none; background:var(--ink); color:#fff; font-size:11px; line-height:1; cursor:pointer; }
 .doc p { line-height:1.85; margin-top:10px; }
 .doc-footer { margin-top:var(--s-6); padding-top:14px; border-top:1px solid var(--hairline); font-size:12px; color:var(--ink-faint); display:flex; justify-content:space-between; }
 @media print {
@@ -83,7 +88,7 @@
   </div>
 </section>
 
-<input type="file" id="expImgInput" accept="image/*" style="display:none">
+<input type="file" id="expImgInput" accept="image/*" multiple style="display:none">
 
 <section class="tile tile--white compact no-print hidden" id="resumeControls">
   <div class="container">
@@ -209,15 +214,18 @@ if (requireAuth()) {
     const el = $(type === 'portfolio' ? 'pfPicker' : 'resPicker'); if (!el) return;
     const sel = getSel(type);
     const ordered = getOrder(type).map(id => items.find(x => x.id === id)).filter(Boolean);
-    el.innerHTML = ordered.map(x => `
-      <div class="flex items-center gap-2" style="padding:7px 0"
+    el.innerHTML = ordered.map(x => {
+      const imgs = type === 'portfolio' ? getImgs(x) : [];
+      const thumbs = imgs.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 8px 44px">${imgs.map((s, i) => `<span class="thumb"><img src="${s}"><button type="button" onclick="removeExpImage('${x.id}',${i})">×</button></span>`).join('')}</div>` : '';
+      return `<div class="flex items-center gap-2" style="padding:7px 0"
         draggable="true" ondragstart="dragStart('${x.id}')" ondragover="event.preventDefault()" ondrop="itemDrop('${type}','${x.id}')">
         <span class="caption" style="cursor:grab" title="드래그로 순서 변경">⠿</span>
         <input type="checkbox" ${sel.includes(x.id) ? 'checked' : ''} onchange="toggleSel('${type}','${x.id}',this.checked)">
         <span style="flex:1"><span class="exp-tag" style="font-size:11px;color:var(--color-primary);background:var(--accent-tint);padding:2px 8px;border-radius:999px">${CAT[x.category]?.label || ''}</span>
         <strong style="margin-left:6px">${x.title}</strong> <span class="caption">· ${x.date}</span></span>
-        ${type === 'portfolio' ? `<button type="button" class="chip" onclick="pickExpImage('${x.id}')">${x.image ? '🖼 변경' : '🖼 이미지'}</button>` : ''}
-      </div>`).join('');
+        ${type === 'portfolio' ? `<button type="button" class="chip" onclick="pickExpImage('${x.id}')">🖼 이미지${imgs.length ? ` (${imgs.length})` : ''}</button>` : ''}
+      </div>${thumbs}`;
+    }).join('');
   }
   function reDoc(type) { if (cur === type) (type === 'portfolio' ? renderPortfolio() : renderResume()); }
   window.toggleSel = (type, id, checked) => {
@@ -243,28 +251,48 @@ if (requireAuth()) {
     _dragId = null;
     renderPicker(type); reDoc(type);
   };
-  /* 경험 대표 이미지 첨부 */
-  function setExpImage(id, dataUrl) {
-    const arr = Store.items; const t = arr.find(x => x.id === id); if (!t) return;
-    t.image = dataUrl; Store.items = arr;                 // 저장
-    const local = items.find(x => x.id === id); if (local) local.image = dataUrl;  // 스냅샷 동기화
+  /* 경험 이미지(여러 장 갤러리) */
+  function getImgs(x) { return (x.images && x.images.length) ? x.images : (x.image ? [x.image] : []); }
+  function galFor(x) {
+    const imgs = getImgs(x);
+    if (imgs.length === 1) return `<img class="pf-img" src="${imgs[0]}" alt="">`;
+    if (imgs.length > 1) return `<div class="pf-gallery">${imgs.map(s => `<img src="${s}" alt="">`).join('')}</div>`;
+    return '';
+  }
+  function saveImgs(id, arr) {
+    const store = Store.items; const t = store.find(x => x.id === id); if (!t) return;
+    t.images = arr; delete t.image; Store.items = store;
+    const local = items.find(x => x.id === id); if (local) { local.images = arr; delete local.image; }
     localStorage.removeItem('cda_doc_portfolio');
     renderPicker('portfolio'); if (cur === 'portfolio') renderPortfolio();
   }
-  window.pickExpImage = (id) => {
-    const inp = $('expImgInput');
-    inp.onchange = () => {
-      const f = inp.files[0]; if (!f) { return; }
+  function downscale(file) {
+    return new Promise(res => {
       const rd = new FileReader();
       rd.onload = e => { const img = new Image(); img.onload = () => {
         const w = Math.min(560, img.width), h = Math.round(img.height * (w / img.width));
         const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
         cv.getContext('2d').drawImage(img, 0, 0, w, h);
-        setExpImage(id, cv.toDataURL('image/jpeg', 0.82));
+        res(cv.toDataURL('image/jpeg', 0.82));
       }; img.src = e.target.result; };
-      rd.readAsDataURL(f); inp.value = '';
+      rd.readAsDataURL(file);
+    });
+  }
+  window.pickExpImage = (id) => {
+    const inp = $('expImgInput');
+    inp.onchange = async () => {
+      const files = Array.from(inp.files || []); if (!files.length) return;
+      const existing = getImgs(items.find(x => x.id === id) || {});
+      const added = [];
+      for (const f of files) added.push(await downscale(f));
+      saveImgs(id, existing.concat(added).slice(0, 8));   // 최대 8장
+      inp.value = '';
     };
     inp.click();
+  };
+  window.removeExpImage = (id, idx) => {
+    const arr = getImgs(items.find(x => x.id === id) || {}).slice();
+    arr.splice(idx, 1); saveImgs(id, arr);
   };
 
   /* 교과(성적) 요약 — 이력서/포트폴리오에 반영 */
@@ -342,6 +370,8 @@ if (requireAuth()) {
 
   function switchDoc(d) {
     cur = d;
+    const label = d === 'self' ? '자기소개서' : d === 'resume' ? '이력서' : '포트폴리오';
+    document.title = `${(getProfile().name || user.name || 'PORTRI')}_${label}`;  // PDF 저장 파일명
     ['self', 'resume', 'portfolio'].forEach(k => $('t' + k.charAt(0).toUpperCase() + k.slice(1)).classList.toggle('on', k === d));
     $('selfControls').classList.toggle('hidden', d !== 'self');
     $('resumeControls').classList.toggle('hidden', d !== 'resume');
@@ -416,7 +446,7 @@ if (requireAuth()) {
     }
     const body = curBlock + list.map(x => {
       const chips = x.competencies.map(cc => { c++; return `<span class="comp-chip">${cc.name} ${cite(c, { ...cc, from: x.title })}</span>`; }).join('');
-      return `<div class="pf-item">${x.image ? `<img class="pf-img" src="${x.image}" alt="">` : ''}<span class="exp-tag" style="font-size:11px;color:var(--color-primary);background:var(--accent-tint);padding:3px 10px;border-radius:999px">${CAT[x.category]?.label}</span>
+      return `<div class="pf-item">${galFor(x)}<span class="exp-tag" style="font-size:11px;color:var(--color-primary);background:var(--accent-tint);padding:3px 10px;border-radius:999px">${CAT[x.category]?.label}</span>
         <h3 style="margin-top:8px">${x.title}</h3>
         <p class="caption">${x.date}${x.org ? ` · ${x.org}` : ''}${x.description ? ` · ${x.description}` : ''} · 등록번호 ${x.id}</p>
         <p>${x.star.a}</p>
