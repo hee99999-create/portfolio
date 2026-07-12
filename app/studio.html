@@ -18,12 +18,34 @@
 .res-row { display:grid; grid-template-columns:130px 1fr; gap:16px; padding:12px 0; border-bottom:1px solid var(--pearl-ring); }
 .res-date { color:var(--ink-faint); font-size:14px; }
 .pf-item { padding:var(--s-3) 0; border-bottom:1px solid var(--pearl-ring); }
-.pf-img { width:100%; max-height:320px; object-fit:cover; border-radius:12px; border:1px solid var(--hairline); margin-bottom:12px; }
-.pf-gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; margin-bottom:12px; }
-.pf-gallery img { width:100%; height:140px; object-fit:cover; border-radius:10px; border:1px solid var(--hairline); }
+.pf-gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin-bottom:12px; }
+.pf-gallery.one { grid-template-columns:1fr; }
+.pf-gallery figure { margin:0; }
+.pf-gallery img { width:100%; height:150px; object-fit:cover; border-radius:10px; border:1px solid var(--hairline); }
+.pf-gallery.one img { height:auto; max-height:340px; border-radius:12px; }
+.pf-gallery figcaption { font-size:12px; color:var(--ink-faint); margin-top:5px; }
 .thumb { position:relative; display:inline-block; }
-.thumb img { width:52px; height:52px; object-fit:cover; border-radius:6px; border:1px solid var(--hairline); display:block; }
+.thumb img { width:110px; height:70px; object-fit:cover; border-radius:6px; border:1px solid var(--hairline); display:block; }
 .thumb button { position:absolute; top:-6px; right:-6px; width:18px; height:18px; border-radius:50%; border:none; background:var(--ink); color:#fff; font-size:11px; line-height:1; cursor:pointer; }
+.imgblk { display:inline-flex; flex-direction:column; gap:4px; width:110px; }
+.imgcap { height:30px !important; font-size:12px; padding:3px 8px; }
+.imgmove { display:flex; gap:4px; }
+.imgmove button { flex:1; border:1px solid var(--hairline); background:#fff; border-radius:6px; cursor:pointer; font-size:11px; padding:2px; }
+/* 이력서 템플릿 5종 */
+.doc.tpl-compact { padding:38px 46px; }
+.doc.tpl-compact .doc-section { margin-top:var(--s-3); }
+.doc.tpl-compact .res-row { padding:8px 0; }
+.doc.tpl-compact h1.doc-t { font-size:1.85rem; }
+.doc.tpl-modern .doc-head { border-bottom:none; }
+.doc.tpl-modern h1.doc-t { font-size:2.7rem; }
+.doc.tpl-modern .doc-section h3 { border-bottom:none; border-left:4px solid var(--color-primary); padding-left:10px; margin-bottom:14px; }
+.doc.tpl-minimal .doc-head { border-bottom:none; text-align:center; }
+.doc.tpl-minimal .doc-section h3 { border-bottom:none; color:var(--ink); letter-spacing:.12em; text-transform:uppercase; font-size:.82rem; }
+.rz-side { display:grid; grid-template-columns:230px 1fr; gap:28px; }
+.rz-side aside { border-right:1px solid var(--hairline); padding-right:24px; }
+.rz-side aside .doc-photo { width:100%; height:auto; aspect-ratio:3/4; margin-bottom:6px; }
+.rz-side main { min-width:0; }
+@media(max-width:640px){ .rz-side { grid-template-columns:1fr; } .rz-side aside { border-right:none; padding-right:0; } }
 .doc p { line-height:1.85; margin-top:10px; }
 .doc-footer { margin-top:var(--s-6); padding-top:14px; border-top:1px solid var(--hairline); font-size:12px; color:var(--ink-faint); display:flex; justify-content:space-between; }
 @media print {
@@ -95,6 +117,11 @@
     <div class="flex between items-center">
       <p class="caption">이력서에 넣을 경험 선택 · <span class="faint">⠿ 드래그로 순서 변경</span></p>
       <div class="btn-row">
+        <span class="caption">템플릿</span>
+        <select id="resumeTpl" class="chip" style="padding:6px 10px" onchange="setResumeTpl()">
+          <option value="classic">클래식</option><option value="sidebar">사이드바</option>
+          <option value="compact">컴팩트</option><option value="modern">모던</option><option value="minimal">미니멀</option>
+        </select>
         <button class="chip chip--selectable" onclick="selectAllSel('resume', true)">전체 선택</button>
         <button class="chip chip--selectable" onclick="selectAllSel('resume', false)">전체 해제</button>
       </div>
@@ -216,7 +243,12 @@ if (requireAuth()) {
     const ordered = getOrder(type).map(id => items.find(x => x.id === id)).filter(Boolean);
     el.innerHTML = ordered.map(x => {
       const imgs = type === 'portfolio' ? getImgs(x) : [];
-      const thumbs = imgs.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 8px 44px">${imgs.map((s, i) => `<span class="thumb"><img src="${s}"><button type="button" onclick="removeExpImage('${x.id}',${i})">×</button></span>`).join('')}</div>` : '';
+      const thumbs = imgs.length ? `<div style="display:flex;gap:10px;flex-wrap:wrap;margin:2px 0 10px 44px">${imgs.map((im, i) => `
+        <div class="imgblk">
+          <div class="thumb"><img src="${im.src}"><button type="button" onclick="removeExpImage('${x.id}',${i})">×</button></div>
+          <input class="field imgcap" value="${(im.caption || '').replace(/"/g, '&quot;')}" placeholder="캡션" oninput="setCaption('${x.id}',${i},this.value)">
+          <div class="imgmove"><button type="button" onclick="moveImage('${x.id}',${i},-1)">◀</button><button type="button" onclick="moveImage('${x.id}',${i},1)">▶</button></div>
+        </div>`).join('')}</div>` : '';
       return `<div class="flex items-center gap-2" style="padding:7px 0"
         draggable="true" ondragstart="dragStart('${x.id}')" ondragover="event.preventDefault()" ondrop="itemDrop('${type}','${x.id}')">
         <span class="caption" style="cursor:grab" title="드래그로 순서 변경">⠿</span>
@@ -251,20 +283,22 @@ if (requireAuth()) {
     _dragId = null;
     renderPicker(type); reDoc(type);
   };
-  /* 경험 이미지(여러 장 갤러리) */
-  function getImgs(x) { return (x.images && x.images.length) ? x.images : (x.image ? [x.image] : []); }
-  function galFor(x) {
-    const imgs = getImgs(x);
-    if (imgs.length === 1) return `<img class="pf-img" src="${imgs[0]}" alt="">`;
-    if (imgs.length > 1) return `<div class="pf-gallery">${imgs.map(s => `<img src="${s}" alt="">`).join('')}</div>`;
-    return '';
+  /* 경험 이미지(여러 장 · 캡션 · 순서) */
+  function getImgs(x) {
+    const arr = (x.images && x.images.length) ? x.images : (x.image ? [x.image] : []);
+    return arr.map(im => typeof im === 'string' ? { src: im, caption: '' } : { src: im.src, caption: im.caption || '' });
   }
-  function saveImgs(id, arr) {
+  function galFor(x) {
+    const imgs = getImgs(x); if (!imgs.length) return '';
+    return `<div class="pf-gallery${imgs.length === 1 ? ' one' : ''}">${imgs.map(im => `<figure><img src="${im.src}" alt="">${im.caption ? `<figcaption>${im.caption}</figcaption>` : ''}</figure>`).join('')}</div>`;
+  }
+  function persistImgs(id, arr, rerenderPicker) {
     const store = Store.items; const t = store.find(x => x.id === id); if (!t) return;
     t.images = arr; delete t.image; Store.items = store;
     const local = items.find(x => x.id === id); if (local) { local.images = arr; delete local.image; }
     localStorage.removeItem('cda_doc_portfolio');
-    renderPicker('portfolio'); if (cur === 'portfolio') renderPortfolio();
+    if (rerenderPicker) renderPicker('portfolio');
+    if (cur === 'portfolio') renderPortfolio();
   }
   function downscale(file) {
     return new Promise(res => {
@@ -282,17 +316,19 @@ if (requireAuth()) {
     const inp = $('expImgInput');
     inp.onchange = async () => {
       const files = Array.from(inp.files || []); if (!files.length) return;
-      const existing = getImgs(items.find(x => x.id === id) || {});
-      const added = [];
-      for (const f of files) added.push(await downscale(f));
-      saveImgs(id, existing.concat(added).slice(0, 8));   // 최대 8장
+      const arr = getImgs(items.find(x => x.id === id) || {});
+      for (const f of files) arr.push({ src: await downscale(f), caption: '' });
+      persistImgs(id, arr.slice(0, 8), true);   // 최대 8장
       inp.value = '';
     };
     inp.click();
   };
-  window.removeExpImage = (id, idx) => {
-    const arr = getImgs(items.find(x => x.id === id) || {}).slice();
-    arr.splice(idx, 1); saveImgs(id, arr);
+  window.removeExpImage = (id, idx) => { const arr = getImgs(items.find(x => x.id === id) || {}); arr.splice(idx, 1); persistImgs(id, arr, true); };
+  window.setCaption = (id, idx, text) => { const arr = getImgs(items.find(x => x.id === id) || {}); if (arr[idx]) arr[idx].caption = text; persistImgs(id, arr, false); };
+  window.moveImage = (id, idx, dir) => {
+    const arr = getImgs(items.find(x => x.id === id) || {}); const j = idx + dir;
+    if (j < 0 || j >= arr.length) return;
+    [arr[idx], arr[j]] = [arr[j], arr[idx]]; persistImgs(id, arr, true);
   };
 
   /* 교과(성적) 요약 — 이력서/포트폴리오에 반영 */
@@ -422,14 +458,33 @@ if (requireAuth()) {
       <p class="caption">이수 ${cs.courses.length}과목 · ${cs.credits}학점 · 평점(GPA) ${cs.gpa}${cs.top.length ? ' · 교과 기반 역량 ' + cs.top.map(t => t.name).join(', ') : ''}</p>
       ${cs.courses.map(c => `<div class="res-row"><div class="res-date">${c.division || ''}</div><div><strong>${c.name}</strong> <span class="caption">· ${c.credit}학점 · ${c.grade}</span></div></div>`).join('')}
       </div>` : '';
-    const body = `<div class="doc-section"><h3>핵심 역량</h3><div class="exp-card__chips">${topComp.map(n => `<span class="comp-chip">${n}</span>`).join('')}</div></div>`
-      + academic + sections + `<p class="fine mt-4">본 이력서의 모든 항목은 증빙자료에 근거합니다. (총 ${list.length}건)</p>`;
+    const note = `<p class="fine mt-4">본 이력서의 모든 항목은 증빙자료에 근거합니다. (총 ${list.length}건)</p>`;
+    const coreChips = `<div class="exp-card__chips">${topComp.map(n => `<span class="comp-chip">${n}</span>`).join('')}</div>`;
     const p = getProfile();
     const contact = [p.phone, p.email || user.email].filter(Boolean).join(' · ');
     const edu = [p.school, p.major, p.grade].filter(Boolean).join(' · ');
-    $('docBody').innerHTML = shell('이력서 · RÉSUMÉ', p.name || user.name, [contact, edu], body, p.photo);
+    $('docBody').innerHTML = resumeDoc(getResumeTpl(), { name: p.name || user.name, contact, edu, photo: p.photo, coreChips, academic, sections, note });
     $('counts').textContent = `경력 ${list.length}건 · 역량 ${topComp.length}`;
     applyDoc();
+  }
+  function getResumeTpl() { return localStorage.getItem('cda_resume_tpl') || 'classic'; }
+  window.setResumeTpl = () => { localStorage.setItem('cda_resume_tpl', $('resumeTpl').value); localStorage.removeItem('cda_doc_resume'); renderResume(); };
+  function resumeDoc(tpl, d) {
+    const core = `<div class="doc-section"><h3>핵심 역량</h3>${d.coreChips}</div>`;
+    const footer = `<div class="doc-footer"><span>PORTRI AI · 증거 기반 역량 리포트</span><span>${DOC_DATE}</span></div>`;
+    if (tpl === 'sidebar') {
+      return `<div class="doc tpl-sidebar"><div class="rz-side">
+        <aside>${d.photo ? `<img class="doc-photo" src="${d.photo}">` : ''}
+          <div class="doc-eyebrow" style="margin-top:10px">이력서</div><h1 class="doc-t" style="font-size:1.7rem">${d.name}</h1>
+          ${d.contact ? `<div class="doc-sub">${d.contact}</div>` : ''}${d.edu ? `<div class="doc-sub">${d.edu}</div>` : ''}
+          ${core}</aside>
+        <main>${d.academic}${d.sections}${d.note}</main></div>${footer}</div>`;
+    }
+    const head = `<div class="doc-head" style="display:flex;gap:24px;align-items:flex-start">
+      <div style="flex:1"><div class="doc-eyebrow">이력서 · RÉSUMÉ</div><h1 class="doc-t">${d.name}</h1>
+        ${d.contact ? `<div class="doc-sub">${d.contact}</div>` : ''}${d.edu ? `<div class="doc-sub">${d.edu}</div>` : ''}</div>
+      ${d.photo ? `<img class="doc-photo" src="${d.photo}">` : ''}</div>`;
+    return `<div class="doc tpl-${tpl}">${head}${core}${d.academic}${d.sections}${d.note}${footer}</div>`;
   }
 
   /* 포트폴리오 */
@@ -466,6 +521,7 @@ if (requireAuth()) {
     $('pPhone').value = p.phone || ''; $('pEmail').value = p.email || user.email || '';
     $('pSchool').value = p.school || ''; $('pMajor').value = p.major || ''; $('pGrade').value = p.grade || '';
     const t = currentTheme(); $('themeColor').value = t.color; $('themeFont').value = t.font;
+    $('resumeTpl').value = getResumeTpl();
   })();
   switchDoc('self');
 }
