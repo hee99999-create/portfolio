@@ -150,6 +150,57 @@ function experienceFromBackend(data, meta) {
 }
 
 /* ============================================================
+   AI 선배 — 전체 활동·역량 기반 진로/취업 조언
+   ============================================================ */
+async function adviseBackend(profile) {
+  try {
+    const r = await fetch(API_BASE + '/advise', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(profile),
+    });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch (e) { return null; }
+}
+const CAREER_MAP = {
+  '종합적사고력': '전략기획 · 경영컨설팅',
+  '자원·정보·기술활용': '소프트웨어 · IT/데이터 직무',
+  '의사소통': '마케팅 · 브랜드 · 교육',
+  '대인관계': '영업 · 사업개발 · HR',
+  '글로벌': '해외영업 · 무역 · 글로벌기업',
+  '자기관리': '프로젝트 매니저(PM) · 운영기획',
+};
+const GAP_ACTION = {
+  '글로벌': '어학 점수 · 교환학생 · 해외봉사',
+  '의사소통': '발표 · 공모전 · 동아리 리더 경험',
+  '대인관계': '팀 프로젝트 · 봉사 · 학생회',
+  '자원·정보·기술활용': '자격증 · 개발 프로젝트 · 데이터 실습',
+  '종합적사고력': '연구 · 논문 · 복합 문제 해결 프로젝트',
+  '자기관리': '장기 프로젝트 완주 · 목표관리 기록',
+};
+/* 백엔드 없을 때 규칙 기반 진로 조언 */
+function careerAdviceMock(agg, items) {
+  const ranked = agg.labels.map((l, i) => ({ name: l, score: agg.mine[i] })).sort((a, b) => b.score - a.score);
+  const top = ranked.filter(r => r.score > 0).slice(0, 2);
+  const bottom = ranked[ranked.length - 1];
+  const careers = top.map(t => ({ role: CAREER_MAP[t.name] || '방향 탐색', why: `${t.name} 역량이 상대적으로 높습니다 (${t.score}점).` }));
+  if (!careers.length) careers.push({ role: '경험을 더 쌓아 방향 탐색', why: '아직 데이터가 적어 강점이 뚜렷하지 않습니다.' });
+  return {
+    strengths: top.length
+      ? `${top.map(t => t.name).join(', ')} 이(가) 두드러집니다. 누적 경험 ${items.length}건에서 나온 결과예요.`
+      : '아직 강점을 판단할 데이터가 부족합니다. 경험을 먼저 등록해 보세요.',
+    careers,
+    gaps: (bottom && bottom.score < 40)
+      ? [`${bottom.name} 역량이 약합니다 (${bottom.score}점).`]
+      : ['특별히 약한 역량은 없어요. 대표 경험의 깊이를 더하면 좋습니다.'],
+    next_actions: [
+      bottom ? `${bottom.name} 보완: ${GAP_ACTION[bottom.name] || '관련 활동 추가'}` : '대표 경험 1~2개를 깊게 정리하기',
+      '교과역량(성적)도 등록해 통합 프로필을 완성하기',
+    ],
+    encouragement: '활동은 이미 잘 쌓고 있어요. 이제 방향만 잡으면 됩니다. 화이팅!',
+  };
+}
+
+/* ============================================================
    교과역량 (성적) 저장소 + 분석
    ============================================================ */
 const Curricular = {
@@ -244,7 +295,7 @@ function mountFooter() {
   el.innerHTML = `<div class="container footer__cols">
     <div class="footer__col"><h4>제품</h4><a href="home.html">홈</a><a href="how-it-works.html">작동 방식</a><a href="features.html">기능</a><a href="preview.html">미리보기</a></div>
     <div class="footer__col"><h4>나의 기록</h4><a href="dashboard.html">경력관리(비교과)</a><a href="curricular.html">교과역량(성적)</a><a href="competency.html">역량 그래프</a><a href="studio.html">문서 만들기</a></div>
-    <div class="footer__col"><h4>도구</h4><a href="coaching.html">AI 코칭</a><a href="professor.html">교수</a><a href="admin.html">관리자</a></div>
+    <div class="footer__col"><h4>도구</h4><a href="coaching.html">AI 선배</a><a href="professor.html">교수</a><a href="admin.html">관리자</a></div>
     </div>
     <div class="container footer__legal"><p class="fine">활동 목록이 아니라, 증거 있는 역량 자산. · K-CESA 매핑 · 증거로 검증된 것만 자산이 됩니다.</p></div>`;
 }

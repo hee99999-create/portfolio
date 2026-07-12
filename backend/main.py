@@ -180,3 +180,75 @@ async def analyze(req: AnalyzeRequest):
     result["source"] = src
     result["taxonomy"] = "K-CESA"
     return result
+
+
+# ============================================================
+# AI 선배 — 전체 활동·역량 기반 진로/취업 조언
+# ============================================================
+class AdviseRequest(BaseModel):
+    competencies: list = []   # [{name, score}]
+    categories: list = []     # [{label, count}]
+    experiences: list = []    # [{title, category}]
+
+
+ADVISE_FUNCTION = {
+    "type": "function",
+    "function": {
+        "name": "career_advice",
+        "description": "학생의 누적 활동·역량을 근거로 진로/취업 방향을 조언한다.",
+        "parameters": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "strengths": {"type": "string", "description": "강점 요약 2~3문장"},
+                "careers": {
+                    "type": "array",
+                    "items": {
+                        "type": "object", "additionalProperties": False,
+                        "properties": {
+                            "role": {"type": "string", "description": "추천 진로/직무"},
+                            "why": {"type": "string", "description": "근거가 된 역량/활동"},
+                        },
+                        "required": ["role", "why"],
+                    },
+                },
+                "gaps": {"type": "array", "items": {"type": "string"}, "description": "부족하거나 약한 점"},
+                "next_actions": {"type": "array", "items": {"type": "string"}, "description": "다음에 쌓으면 좋을 활동"},
+                "encouragement": {"type": "string", "description": "한 줄 응원"},
+            },
+            "required": ["strengths", "careers", "gaps", "next_actions", "encouragement"],
+        },
+    },
+}
+
+
+@app.post("/advise")
+def advise(req: AdviseRequest):
+    profile = json.dumps(
+        {"competencies": req.competencies, "categories": req.categories, "experiences": req.experiences},
+        ensure_ascii=False,
+    )
+    try:
+        resp = client.chat.completions.create(
+            model=MODEL,
+            temperature=0.3,
+            messages=[
+                {"role": "system", "content": (
+                    "당신은 대학생의 진로·취업을 돕는 따뜻하지만 솔직한 선배입니다. "
+                    "학생의 누적 활동과 K-CESA 역량 데이터에 근거해서만 조언하고, "
+                    "데이터에 없는 사실은 지어내지 않습니다. 구체적이고 실행 가능하게 말합니다."
+                )},
+                {"role": "user", "content": (
+                    "다음은 한 학생의 프로필입니다. 강점 요약, 추천 진로/직무 2~3개(각 근거), "
+                    "부족한 점, 다음에 쌓으면 좋을 활동, 한 줄 응원을 알려주세요.\n\n" + profile
+                )},
+            ],
+            tools=[ADVISE_FUNCTION],
+            tool_choice={"type": "function", "function": {"name": "career_advice"}},
+        )
+    except openai.OpenAIError as e:
+        raise HTTPException(502, f"AI 조언 실패: {e}")
+    msg = resp.choices[0].message
+    if not msg.tool_calls:
+        raise HTTPException(502, "결과를 받지 못했습니다.")
+    return json.loads(msg.tool_calls[0].function.arguments)
