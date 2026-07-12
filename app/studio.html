@@ -82,6 +82,19 @@
   </div>
 </section>
 
+<section class="tile tile--white compact no-print hidden" id="portfolioControls">
+  <div class="container">
+    <div class="flex between items-center">
+      <p class="caption">포트폴리오에 넣을 경험 선택</p>
+      <div class="btn-row">
+        <button class="chip chip--selectable" onclick="selectAllPf(true)">전체 선택</button>
+        <button class="chip chip--selectable" onclick="selectAllPf(false)">전체 해제</button>
+      </div>
+    </div>
+    <div id="pfPicker" class="mt-2"></div>
+  </div>
+</section>
+
 <section class="tile tile--parchment" style="min-height:52vh">
   <div class="container">
     <div id="docEmpty" class="empty hidden"><h3 class="faint">경력을 먼저 등록하면 문서가 만들어집니다</h3>
@@ -154,6 +167,34 @@ if (requireAuth()) {
   }
   /* 프로필(사진·연락처·학력) */
   function getProfile() { try { return JSON.parse(localStorage.getItem('cda_profile')) || {}; } catch { return {}; } }
+  /* 포트폴리오 경험 선택 */
+  function getPfSel() {
+    const raw = localStorage.getItem('cda_portfolio_sel');
+    if (raw === null) return items.map(x => x.id);   // 기본: 전체 선택
+    try { return JSON.parse(raw) || []; } catch { return items.map(x => x.id); }
+  }
+  function renderPfPicker() {
+    const sel = getPfSel();
+    $('pfPicker').innerHTML = items.map(x => `
+      <label class="flex items-center gap-2" style="padding:7px 0;cursor:pointer">
+        <input type="checkbox" ${sel.includes(x.id) ? 'checked' : ''} onchange="togglePf('${x.id}', this.checked)">
+        <span><span class="exp-tag" style="font-size:11px;color:var(--color-primary);background:var(--accent-tint);padding:2px 8px;border-radius:999px">${CAT[x.category]?.label || ''}</span>
+        <strong style="margin-left:6px">${x.title}</strong> <span class="caption">· ${x.date}</span></span>
+      </label>`).join('');
+  }
+  window.togglePf = (id, checked) => {
+    let sel = getPfSel();
+    if (checked) { if (!sel.includes(id)) sel.push(id); } else { sel = sel.filter(i => i !== id); }
+    localStorage.setItem('cda_portfolio_sel', JSON.stringify(sel));
+    localStorage.removeItem('cda_doc_portfolio');   // 선택이 바뀌면 초안 재생성
+    if (cur === 'portfolio') renderPortfolio();
+  };
+  window.selectAllPf = (all) => {
+    localStorage.setItem('cda_portfolio_sel', JSON.stringify(all ? items.map(x => x.id) : []));
+    localStorage.removeItem('cda_doc_portfolio');
+    renderPfPicker(); if (cur === 'portfolio') renderPortfolio();
+  };
+
   /* 교과(성적) 요약 — 이력서/포트폴리오에 반영 */
   function curricularSummary() {
     const cur = (typeof Curricular !== 'undefined') ? Curricular.data : null;
@@ -231,11 +272,12 @@ if (requireAuth()) {
     cur = d;
     ['self', 'resume', 'portfolio'].forEach(k => $('t' + k.charAt(0).toUpperCase() + k.slice(1)).classList.toggle('on', k === d));
     $('selfControls').classList.toggle('hidden', d !== 'self');
+    $('portfolioControls').classList.toggle('hidden', d !== 'portfolio');
     if (items.length === 0) { $('docEmpty').classList.remove('hidden'); $('docBody').innerHTML = ''; $('counts').textContent = ''; return; }
     $('docEmpty').classList.add('hidden');
     if (d === 'self') renderSelf();
     else if (d === 'resume') renderResume();
-    else renderPortfolio();
+    else { renderPfPicker(); renderPortfolio(); }
   }
   window.switchDoc = switchDoc;
 
@@ -293,7 +335,13 @@ if (requireAuth()) {
     const curBlock = cs ? `<div class="doc-section"><h3>교과 역량</h3>
       <p class="caption">전공·교양 이수에서 드러난 역량 · 평점(GPA) ${cs.gpa}</p>
       <div class="exp-card__chips mt-2">${cs.top.map(t => `<span class="comp-chip">${t.name} ${t.score}점</span>`).join('')}</div></div>` : '';
-    const body = curBlock + items.map(x => {
+    const sel = getPfSel();
+    const list = items.filter(x => sel.includes(x.id));
+    if (list.length === 0) {
+      $('docBody').innerHTML = shell('포트폴리오', `${(getProfile().name || user.name)}의 역량 자산`, [], curBlock + '<p class="muted center mt-5">넣을 경험을 위에서 선택하세요.</p>', getProfile().photo);
+      $('counts').textContent = '경험 0건'; applyDoc(); return;
+    }
+    const body = curBlock + list.map(x => {
       const chips = x.competencies.map(cc => { c++; return `<span class="comp-chip">${cc.name} ${cite(c, { ...cc, from: x.title })}</span>`; }).join('');
       return `<div class="pf-item"><span class="exp-tag" style="font-size:11px;color:var(--color-primary);background:var(--accent-tint);padding:3px 10px;border-radius:999px">${CAT[x.category]?.label}</span>
         <h3 style="margin-top:8px">${x.title}</h3>
@@ -303,8 +351,8 @@ if (requireAuth()) {
     }).join('');
     const p = getProfile();
     const contact = [p.phone, p.email || user.email].filter(Boolean).join(' · ');
-    $('docBody').innerHTML = shell('포트폴리오', `${p.name || user.name}의 역량 자산`, [`증거로 검증된 ${items.length}개의 경험`, contact], body, p.photo);
-    $('counts').textContent = `경험 ${items.length}건 · 인용 ${c}`;
+    $('docBody').innerHTML = shell('포트폴리오', `${p.name || user.name}의 역량 자산`, [`증거로 검증된 ${list.length}개의 경험`, contact], body, p.photo);
+    $('counts').textContent = `경험 ${list.length}건 · 인용 ${c}`;
     applyDoc();
   }
 
