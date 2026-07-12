@@ -1,5 +1,5 @@
 /* ============================================================
-   Career Data Account v2 — shared app logic (mock frontend)
+   PORTRI AI v2 — shared app logic (mock frontend)
    통합 "경험" 모델 · 경력관리 누적 · K-CESA 역량 · 문서 생성
    ============================================================ */
 
