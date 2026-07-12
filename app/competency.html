@@ -446,7 +446,8 @@ if (requireAuth()) {
           <span class="ev-strength">강도 ${e.level}단계 · ${STRENGTH_LEVELS[e.level].label}</span>
         </div>
         <p class="quote">“${e.evidence}”</p>
-        <p class="fine">근거: ${e.strengthReason}</p>
+        <p class="fine"><strong>왜 ${name} 역량인가요?</strong> ${e.competencyReason || (name + ' 역량과 연결되는 행동이 확인됩니다.')}</p>
+        <p class="fine">증거 강도 근거: ${e.strengthReason}</p>
         <div class="flex between items-center mt-2">
           <span class="caption">활동 시점 ${e.date || '미상'} · 출처 ${e.src}</span>
           <a class="link" href="card-detail.html?id=${e.expId}">경험 상세 보기 ›</a>

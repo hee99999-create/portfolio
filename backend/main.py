@@ -48,7 +48,8 @@ SYSTEM_PROMPT = (
     "학생의 역량 자체를 평가하지 않습니다. 오직 원본 텍스트에 실제로 존재하는 "
     "정확한 인용(evidence)을 근거로만 역량을 연결합니다(요약·창작 금지). "
     "증거가 없는 역량은 절대 포함하지 마세요. 추측하지 마세요. "
-    "각 증거에는 강도(evidenceStrength)를 1~4단계로 매기되, 반드시 인용된 원문 내용에만 근거해 판단하고, "
+    "각 증거에는 그 인용이 왜 해당 역량에 연결되는지 competency_reason 을 원문에 나타난 행동으로 설명하세요. "
+    "각 증거에는 강도(strengthLevel)를 1~4단계로 매기되, 반드시 인용된 원문 내용에만 근거해 판단하고, "
     "그 이유(strength_reason)를 원문에 나타난 사실로 설명하세요. 근거 없는 강도 평가는 금지합니다. "
     "강도 기준 — 1: 단순 참여/언급, 2: 구체적 행동 확인, "
     "3: 주도적 행동·문제해결·협업·의사결정 확인, 4: 구체적 행동과 측정 가능한 결과·성과가 함께 확인. "
@@ -86,11 +87,12 @@ EXTRACT_FUNCTION = {
                             "name": {"type": "string", "enum": KCESA},
                             "confidence": {"type": "integer", "enum": [1, 2, 3, 4, 5]},
                             "evidence": {"type": "string", "description": "원문에서 그대로 인용한 문장"},
+                            "competency_reason": {"type": "string", "description": "이 evidence가 왜 해당 K-CESA 역량에 연결되는지 — 원문에 나타난 행동으로 설명"},
                             "strengthLevel": {"type": "integer", "enum": [1, 2, 3, 4], "description": "1:단순참여 2:구체적행동 3:주도·문제해결 4:성과입증 (인용 원문 근거로만 판단)"},
                             "strength_reason": {"type": "string", "description": "그 강도로 판단한 이유 — 원문에 나타난 사실로 설명 (strengthLevel과 반드시 함께 반환)"},
                             "source_ref": {"type": "string", "description": "인용 위치(예: README.md, 3번째 문단)"},
                         },
-                        "required": ["name", "confidence", "evidence", "strengthLevel", "strength_reason", "source_ref"],
+                        "required": ["name", "confidence", "evidence", "competency_reason", "strengthLevel", "strength_reason", "source_ref"],
                     },
                 },
             },
@@ -186,6 +188,7 @@ async def analyze(req: AnalyzeRequest):
             verified.append(c)
     result["competencies"] = verified
     result["source"] = src
+    result["source_text"] = content          # 프론트 원문 재검증용
     result["taxonomy"] = "K-CESA"
     return result
 

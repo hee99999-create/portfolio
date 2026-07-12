@@ -247,7 +247,7 @@ const CATEGORY_FIELDS = {
   education: [_txt('fTitle', '교육 / 연수명', '예: 데이터 분석 부트캠프'), _txt('fOrg', '교육기관', '주관기관'), _txt('fPlace', '교육장소', '예: 온라인 / OO센터'), _period('교육기간'), _hoursOnly('교육시간'), _txt('fContent', '교육내용', '배운 내용 · 과정 요약')],
   club:      [_txt('fTitle', '동아리명', '예: 로봇공학회'), _period('활동기간'), _txt('fContent', '활동내용', '주요 활동 요약'), _txt('fOrg', '직위', '예: 회장 / 기획부장')],
   research:  [_txt('fTitle', '논문제목'), _txt('fOrg', '학술지명'), _txt('fVol', '권(호,집)', '예: 12(3)'), _date('fDate', '게재일자'), _txt('fPages', '게재쪽수', '예: 45-52'), _txt('fJtype', '학술지구분', '예: KCI / SCI')],
-  project:   [_txt('fTitle', '프로젝트명'), _txt('fOrg', '소속 · 역할'), _period('프로젝트 기간')],
+  project:   [_txt('fTitle', '프로젝트명'), _txt('fOrg', '소속 · 역할'), _period('프로젝트 기간'), _txt('fContent', '활동 내용', '핵심 활동·역할·성과를 문장으로 서술 (AI가 이 원문에서 증거를 찾습니다)')],
   etc:       [_txt('fTitle', '제목'), _txt('fOrg', '기관 / 설명'), _date('fDate', '일자')],
 };
 function renderFields() {

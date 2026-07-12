@@ -42,6 +42,30 @@ const EVIDENCE_BY_COMP = {
   '의사소통':            '핵심을 정리해 전달하고 피드백을 반영했다',
   '종합적사고력':        '여러 제약을 함께 고려해 근거로 판단하고 결론을 냈다',
 };
+/* 역량 연결 이유 템플릿 (mock — 왜 이 evidence가 이 역량인지) */
+const COMPETENCY_REASON_BY_COMP = {
+  '자기관리':            '스스로 목표를 세우고 기한 내 완수·점검한 자기관리 행동이 확인됩니다.',
+  '대인관계':            '구성원과 협업하며 의견 충돌을 조율한 대인관계 행동이 확인됩니다.',
+  '자원·정보·기술활용':  '필요한 도구·자료를 찾아 조합해 문제를 해결한 활용 행동이 확인됩니다.',
+  '글로벌':              '외국어·다문화 맥락에서 소통하고 성과를 낸 글로벌 행동이 확인됩니다.',
+  '의사소통':            '핵심 내용을 정리해 전달하고 피드백을 반영한 의사소통 행동이 확인됩니다.',
+  '종합적사고력':        '여러 제약을 함께 고려해 근거로 판단·결론지은 종합적 사고가 확인됩니다.',
+};
+
+/* ============================================================
+   증거 원문 검증 — 인용이 원문에 실제 존재하는지 (과도한 fuzzy 금지)
+   공백·개행만 정규화하고, 정규화된 원문에 정규화된 인용이 substring으로
+   존재할 때만 true. 서로 다른 문장을 이어붙이거나 변형하면 false.
+   ============================================================ */
+function _normForVerify(s) {
+  return String(s == null ? '' : s).normalize('NFC').replace(/\s+/g, ' ').trim();
+}
+function verifyEvidenceAgainstSource(evidence, originalText) {
+  const ev = _normForVerify(evidence);
+  const src = _normForVerify(originalText);
+  if (!ev || !src) return false;
+  return src.includes(ev);
+}
 
 /* ============================================================
    ★ 증거 강도(Evidence Strength) 4단계
@@ -96,6 +120,7 @@ function makeExperience({ source, category, title, org, date, description, url, 
     confidence: 3 + Math.floor(Math.random() * 3), // 3~5 (레거시 호환)
     pct: 60 + Math.floor(Math.random() * 40),      // 60~99 (레거시 호환)
     evidence: EVIDENCE_BY_COMP[name],
+    competencyReason: COMPETENCY_REASON_BY_COMP[name] || `${name} 역량과 연결되는 행동이 확인됩니다.`,
     strengthLevel: lvl,                             // 1~4 (증거 강도)
     evidenceStrength: lvl,                          // 레거시 별칭 (구버전 화면 호환)
     strengthReason: `${CAT[category]?.label || '경험'}의 "${(description || EVIDENCE_BY_COMP[name]).slice(0, 40)}"에서 ${STRENGTH_LEVELS[lvl].desc}`,
@@ -113,6 +138,7 @@ function makeExperience({ source, category, title, org, date, description, url, 
     date: date || '2025',            // 레거시 별칭 (= 활동 시점)
     experienceDate: date || '2025',  // 실제 경험이 발생한 시점
     createdAt: nowISO(),             // PORTRI AI에 등록한 시점
+    originalText: description || '', // 분석 근거가 된 원문(자유서술)
     description: description || '',
     url: url || '', files: files || [],
     star: {
@@ -154,17 +180,21 @@ async function analyzeBackend(payload) {
 }
 /* 백엔드 응답 → 통합 경험 모델 변환 */
 function experienceFromBackend(data, meta) {
+  const sourceText = data.source_text || meta.originalText || meta.description || '';
   const comps = (data.competencies || []).map(c => {
     const lvl = Math.min(4, Math.max(1, c.strengthLevel || c.strength_level || c.evidenceStrength || c.evidence_strength || 2));
+    // 백엔드가 verified 표기를 안 줬을 때도 프론트에서 원문 대조로 재검증
+    const verified = c.verified === true || (sourceText ? verifyEvidenceAgainstSource(c.evidence, sourceText) : true);
     return {
       name: c.name,
       confidence: c.confidence || 3,
       pct: Math.min(100, (c.confidence || 3) * 18 + 10),
       evidence: c.evidence,
+      competencyReason: c.competency_reason || c.competencyReason || `${c.name} 역량과 연결되는 행동이 확인됩니다.`,
       strengthLevel: lvl,
       evidenceStrength: lvl,                          // 레거시 별칭
       strengthReason: c.strength_reason || c.strengthReason || STRENGTH_LEVELS[lvl].desc,
-      verified: c.verified !== false,                 // 백엔드가 원문 대조로 검증한 증거
+      verified,                                       // 백엔드 검증 + 프론트 원문 재대조
       src: c.source_ref || (meta.files && meta.files[0]) || meta.url || '증빙',
     };
   });
@@ -175,6 +205,7 @@ function experienceFromBackend(data, meta) {
     title: data.title || meta.title || '경험',
     org: meta.org || '', date: meta.date || '2025',
     experienceDate: meta.date || '2025', createdAt: nowISO(),
+    originalText: sourceText,
     description: meta.description || meta.org || '', url: meta.url || '', files: meta.files || [],
     star: { s: s.situation || '', t: s.task || '', a: s.action || '', r: s.result || '' },
     competencies: comps,
@@ -442,6 +473,7 @@ function evidenceIndexFor(compName, items, asOf, now) {
         expId: x.id, title: x.title, category: x.category,
         categoryLabel: CAT[x.category]?.label || '경험',
         evidence: c.evidence, src: c.src, level: lvl,
+        competencyReason: c.competencyReason || `${compName} 역량과 연결되는 행동이 확인됩니다.`,
         strengthReason: c.strengthReason || STRENGTH_LEVELS[lvl].desc,
         verified: isVerified(c),
         date: experienceDateStr(x), when,

@@ -173,7 +173,10 @@ if (requireAuth()) {
   $('metaCount').textContent = `재료 ${items.length}건`;
 
   const reflection = (() => { try { return JSON.parse(localStorage.getItem('cda_reflection')) || []; } catch { return []; } })();
-  const allEvidence = items.flatMap(x => x.competencies.map(c => ({ ...c, from: x.title })));
+  // 문서 생성에는 verified 증거만 사용 (미검증 증거 제외)
+  const verifiedComps = x => (x.competencies || []).filter(c => c.verified !== false);
+  const verifiedEvCount = list => list.reduce((n, x) => n + verifiedComps(x).length, 0);
+  const allEvidence = items.flatMap(x => verifiedComps(x).map(c => ({ ...c, from: x.title })));
   const cite = (n, ev) => `<span class="cite">[${n}]<span class="cite__tip">${ev.evidence}<span class="src">${ev.src} · ${ev.from || ''}</span></span></span>`;
   const shell = (eyebrow, name, subLines, body, photo) => {
     const subs = (subLines || []).filter(Boolean).map(s => `<div class="doc-sub">${s}</div>`).join('');
@@ -451,7 +454,7 @@ if (requireAuth()) {
       ${byCat[c.key].map(x => `<div class="res-row"><div class="res-date">${x.date}</div>
         <div><strong>${x.title}</strong>${x.org ? ` <span class="caption">· ${x.org}</span>` : ''}
         ${x.description ? `<div class="caption mt-1">${x.description}</div>` : ''}
-        <div class="exp-card__chips mt-1">${x.competencies.map(cc => `<span class="comp-chip">${cc.name}</span>`).join('')}</div></div></div>`).join('')}
+        <div class="exp-card__chips mt-1">${verifiedComps(x).map(cc => `<span class="comp-chip">${cc.name}</span>`).join('')}</div></div></div>`).join('')}
       </div>`).join('');
     const cs = curricularSummary();
     const academic = cs ? `<div class="doc-section"><h3>학업 · 교과 이수</h3>
@@ -464,7 +467,7 @@ if (requireAuth()) {
     const contact = [p.phone, p.email || user.email].filter(Boolean).join(' · ');
     const edu = [p.school, p.major, p.grade].filter(Boolean).join(' · ');
     $('docBody').innerHTML = resumeDoc(getResumeTpl(), { name: p.name || user.name, contact, edu, photo: p.photo, coreChips, academic, sections, note });
-    $('counts').textContent = `경력 ${list.length}건 · 역량 ${topComp.length}`;
+    $('counts').textContent = `선택 경험 ${list.length}건 · 검증 Evidence ${verifiedEvCount(list)}개 기반`;
     applyDoc();
   }
   function getResumeTpl() { return localStorage.getItem('cda_resume_tpl') || 'classic'; }
@@ -500,7 +503,7 @@ if (requireAuth()) {
       $('counts').textContent = '경험 0건'; applyDoc(); return;
     }
     const body = curBlock + list.map(x => {
-      const chips = x.competencies.map(cc => { c++; return `<span class="comp-chip">${cc.name} ${cite(c, { ...cc, from: x.title })}</span>`; }).join('');
+      const chips = verifiedComps(x).map(cc => { c++; return `<span class="comp-chip">${cc.name} ${cite(c, { ...cc, from: x.title })}</span>`; }).join('');
       return `<div class="pf-item">${galFor(x)}<span class="exp-tag" style="font-size:11px;color:var(--color-primary);background:var(--accent-tint);padding:3px 10px;border-radius:999px">${CAT[x.category]?.label}</span>
         <h3 style="margin-top:8px">${x.title}</h3>
         <p class="caption">${x.date}${x.org ? ` · ${x.org}` : ''}${x.description ? ` · ${x.description}` : ''} · 등록번호 ${x.id}</p>
@@ -510,7 +513,7 @@ if (requireAuth()) {
     const p = getProfile();
     const contact = [p.phone, p.email || user.email].filter(Boolean).join(' · ');
     $('docBody').innerHTML = shell('포트폴리오', `${p.name || user.name}의 역량 자산`, [`증거로 검증된 ${list.length}개의 경험`, contact], body, p.photo);
-    $('counts').textContent = `경험 ${list.length}건 · 인용 ${c}`;
+    $('counts').textContent = `선택 경험 ${list.length}건 · 검증 Evidence ${c}개 기반`;
     applyDoc();
   }
 

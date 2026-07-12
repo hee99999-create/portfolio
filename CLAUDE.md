@@ -42,6 +42,13 @@
 - **Evidence 필드**: `strengthLevel`(1~4) · `strengthReason` · `verified`. **verified=true 인 증거만 계산에 반영**(레거시 데이터는 `verified!==false`로 안전 포함). backend는 원문 대조 통과 시 `verified:true` 표기.
 - **날짜 분리**: `experienceDate`(활동 시점) vs `createdAt`(등록 시점). 성장 비교는 **experienceDate 기준**, 기존 데이터는 `experienceDate ?? date` fallback(마이그레이션 쓰기 없음 → 데이터 보존).
 
+**E2E 파이프라인 보완 (2026-07, 3차):**
+- **역량 연결 이유** `competencyReason` — evidence가 왜 그 K-CESA 역량인지. app.js·backend 스키마·card-detail·competency 모달에서 "왜 이 역량인가요?"로 노출.
+- **원문 추적** `originalText` — 분석 근거가 된 자유서술 원문을 경험에 저장(project 카테고리에 `활동 내용` 입력란 추가).
+- **원문 검증** `verifyEvidenceAgainstSource(evidence, originalText)` — 공백/개행만 정규화한 substring 검증(과도한 fuzzy 금지). 변형·병합·날조 인용은 verified=false. 백엔드는 `source_text`를 함께 반환해 프론트가 재대조.
+- **문서 생성** studio는 **verified evidence만** 사용하고 "선택 경험 N · 검증 Evidence M개 기반" 표기. 선택 해제한 경험은 문서에서 제외.
+- **E2E 테스트**: `tests/portri-core-flow.spec.js`(Playwright). `npm test`. deterministic 7종 + live-AI 1종(백엔드 없으면 SKIP=BLOCKED).
+
 **금지 표현**: 나의 역량 점수 · K-CESA 점수 · 학과평균 · 동일학년 평균 · 다른 학생과의 비교 · 부족한 역량.
 **대체 표현(수준)**: 아직 발견되지 않음 · 증거 필요 · 성장 중 · 강함 · 매우 강함.
 

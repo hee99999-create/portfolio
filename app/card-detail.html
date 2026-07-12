@@ -87,7 +87,8 @@ if (requireAuth()) {
         </div>
         <p class="mt-2" style="color:var(--ink-soft)">“${c.evidence}”
           <span class="cite">[${i + 1}]<span class="cite__tip">${c.evidence}<span class="src">${c.src}</span></span></span></p>
-        <p class="fine mt-1">강도 근거: ${c.strengthReason || s.desc}</p>
+        <p class="fine mt-1"><strong>왜 이 역량인가요?</strong> ${c.competencyReason || (c.name + ' 역량과 연결되는 행동이 확인됩니다.')}</p>
+        <p class="fine mt-1"><strong>증거 강도 근거:</strong> ${c.strengthReason || s.desc}</p>
         <p class="fine mt-1">출처: ${c.src}</p>
       </div>`;
     }).join('');

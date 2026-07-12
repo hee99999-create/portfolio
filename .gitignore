@@ -4,3 +4,8 @@
 **/.venv/
 **/__pycache__/
 *.pyc
+# node / playwright
+node_modules/
+test-results/
+playwright-report/
+package-lock.json
