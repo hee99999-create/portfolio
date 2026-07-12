@@ -80,6 +80,7 @@ body {
   background: var(--surface-white);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  overflow-x: clip;   /* 절대배치 툴팁 등이 가로 스크롤을 만들지 않도록 (sticky 안 깨짐) */
 }
 img { max-width: 100%; display: block; }
 a { color: var(--color-primary); text-decoration: none; }
@@ -260,7 +261,7 @@ h3, .h3 { font-weight: 600; letter-spacing: -0.02em;
   display: inline-flex; align-items: center; justify-content: center;
   font-size: 0.64em; font-weight: 700; vertical-align: super;
   color: var(--color-primary-press); background: var(--accent-tint-strong);
-  box-shadow: inset 0 0 0 1px rgba(207,79,44,0.28);
+  box-shadow: inset 0 0 0 1px var(--accent-ring);
   border-radius: var(--r-pill); min-width: 1.5em; height: 1.5em;
   padding: 0 0.4em; margin-left: 3px; cursor: help;
   position: relative; transition: background .12s ease;
@@ -269,7 +270,7 @@ h3, .h3 { font-weight: 600; letter-spacing: -0.02em;
 /* 증거 툴팁 */
 .cite__tip {
   position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
-  width: max-content; max-width: 300px; z-index: 50;
+  width: max-content; max-width: min(300px, 80vw); z-index: 50;
   background: var(--ink); color: #fff; font-size: 12px; font-weight: 400;
   line-height: 1.5; letter-spacing: 0; text-align: left;
   padding: 10px 12px; border-radius: var(--r-compact);
@@ -424,4 +425,8 @@ h3, .h3 { font-weight: 600; letter-spacing: -0.02em;
   /* 모달을 바텀시트로 */
   .overlay { align-items: flex-end; padding: 0; }
   .modal { max-width: 100%; border-radius: var(--r-card) var(--r-card) 0 0; }
+  /* 항목 많은 서브내비는 가로 스와이프로 (툴바 잘림 방지) */
+  .subnav { overflow-x: auto; gap: var(--s-2); scrollbar-width: none; }
+  .subnav::-webkit-scrollbar { display: none; }
+  .subnav > * { flex: none; }
 }
