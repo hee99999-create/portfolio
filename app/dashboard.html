@@ -30,6 +30,7 @@
 
 <div class="subnav">
   <span class="subnav__title">경력관리</span>
+  <span id="aiStatus" class="caption" style="margin-left:14px">AI 상태 확인 중…</span>
   <span class="subnav__spacer"></span>
   <a class="link" href="competency.html">역량 그래프 ›</a>
   <button class="btn btn--dark" style="margin-left:16px" onclick="if(confirm('데모 데이터를 초기화할까요?')){Store.reset();location.reload()}">초기화</button>
@@ -141,6 +142,13 @@ if (requireAuth()) {
   document.getElementById('catSelect').innerHTML += CATEGORIES.map(c => `<option value="${c.key}">${c.label}</option>`).join('');
   Store.seedIfEmpty();
   render();
+  // AI(백엔드) 연결 상태 표시
+  checkBackend().then(h => {
+    const el = document.getElementById('aiStatus');
+    if (!el) return;
+    el.textContent = h ? `🟢 AI 연결됨 · ${h.model || h.provider || ''}` : '⚪ 데모 모드 (백엔드 꺼짐)';
+    el.style.color = h ? '#2e7d46' : 'var(--ink-faint)';
+  });
 }
 
 function render() {
@@ -176,7 +184,7 @@ function render() {
       <div class="exp-row__top">
         <div><span class="exp-tag">${CAT[x.category]?.label || '경험'}</span>
           <strong style="margin-left:8px">${x.title}</strong></div>
-        <span class="caption">${x.date}</span>
+        <span class="caption">${x.engine === 'ai' ? '🟢 AI 분석' : '⚪ 데모'} · ${x.date}</span>
       </div>
       <div class="caption mt-1">${x.org || ''} · ${proof} · 등록번호 ${x.id}</div>
       <div class="exp-card__chips mt-2">${chips}</div>

@@ -97,6 +97,7 @@ function makeExperience({ source, category, title, org, date, description, url, 
       r: '측정 가능한 결과와 배운 점을 정리했다.',
     },
     competencies: comps,
+    engine: 'mock',
   };
 }
 function autoTitle(source, url, label) {
@@ -109,6 +110,14 @@ function autoTitle(source, url, label) {
    백엔드 주소 변경: localStorage.setItem('cda_api','https://...')
    ============================================================ */
 const API_BASE = (typeof localStorage !== 'undefined' && localStorage.getItem('cda_api')) || 'http://localhost:8000';
+/* 백엔드(AI) 살아있는지 확인 → {status, model, provider} 또는 null */
+async function checkBackend() {
+  try {
+    const r = await fetch(API_BASE + '/health', { method: 'GET' });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch (e) { return null; }
+}
 async function analyzeBackend(payload) {
   try {
     const r = await fetch(API_BASE + '/analyze', {
@@ -136,6 +145,7 @@ function experienceFromBackend(data, meta) {
     description: meta.org || '', url: meta.url || '', files: meta.files || [],
     star: { s: s.situation || '', t: s.task || '', a: s.action || '', r: s.result || '' },
     competencies: comps,
+    engine: 'ai',
   };
 }
 
