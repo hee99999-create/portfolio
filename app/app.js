@@ -88,6 +88,7 @@ const Store = {
 /* ============================================================
    경험 생성 (링크 / 파일+카테고리 / 성적)
    ============================================================ */
+function nowISO() { try { return new Date().toISOString(); } catch { return ''; } }
 function makeExperience({ source, category, title, org, date, description, url, files }) {
   const lvl = MOCK_STRENGTH_BY_CATEGORY[category] || 2;
   const comps = (CATEGORY_COMPETENCY[category] || ['자기관리']).map((name, i) => ({
@@ -95,8 +96,10 @@ function makeExperience({ source, category, title, org, date, description, url, 
     confidence: 3 + Math.floor(Math.random() * 3), // 3~5 (레거시 호환)
     pct: 60 + Math.floor(Math.random() * 40),      // 60~99 (레거시 호환)
     evidence: EVIDENCE_BY_COMP[name],
-    evidenceStrength: lvl,                          // 1~4 (증거 강도)
+    strengthLevel: lvl,                             // 1~4 (증거 강도)
+    evidenceStrength: lvl,                          // 레거시 별칭 (구버전 화면 호환)
     strengthReason: `${CAT[category]?.label || '경험'}의 "${(description || EVIDENCE_BY_COMP[name]).slice(0, 40)}"에서 ${STRENGTH_LEVELS[lvl].desc}`,
+    verified: true,                                 // 계산에 반영되는 검증된 증거
     src: source === 'link' ? (url || '원본 링크')
        : source === 'grade' ? '성적증명서'
        : (files && files[0] ? files[0] : '증빙자료'),
@@ -107,7 +110,9 @@ function makeExperience({ source, category, title, org, date, description, url, 
     source, category,
     title: title || (autoTitle(source, url, label)),
     org: org || '',
-    date: date || '2025',
+    date: date || '2025',            // 레거시 별칭 (= 활동 시점)
+    experienceDate: date || '2025',  // 실제 경험이 발생한 시점
+    createdAt: nowISO(),             // PORTRI AI에 등록한 시점
     description: description || '',
     url: url || '', files: files || [],
     star: {
@@ -150,14 +155,16 @@ async function analyzeBackend(payload) {
 /* 백엔드 응답 → 통합 경험 모델 변환 */
 function experienceFromBackend(data, meta) {
   const comps = (data.competencies || []).map(c => {
-    const lvl = Math.min(4, Math.max(1, c.evidenceStrength || c.evidence_strength || 2));
+    const lvl = Math.min(4, Math.max(1, c.strengthLevel || c.strength_level || c.evidenceStrength || c.evidence_strength || 2));
     return {
       name: c.name,
       confidence: c.confidence || 3,
       pct: Math.min(100, (c.confidence || 3) * 18 + 10),
       evidence: c.evidence,
-      evidenceStrength: lvl,
+      strengthLevel: lvl,
+      evidenceStrength: lvl,                          // 레거시 별칭
       strengthReason: c.strength_reason || c.strengthReason || STRENGTH_LEVELS[lvl].desc,
+      verified: c.verified !== false,                 // 백엔드가 원문 대조로 검증한 증거
       src: c.source_ref || (meta.files && meta.files[0]) || meta.url || '증빙',
     };
   });
@@ -167,6 +174,7 @@ function experienceFromBackend(data, meta) {
     source: meta.source, category: meta.category || 'project',
     title: data.title || meta.title || '경험',
     org: meta.org || '', date: meta.date || '2025',
+    experienceDate: meta.date || '2025', createdAt: nowISO(),
     description: meta.description || meta.org || '', url: meta.url || '', files: meta.files || [],
     star: { s: s.situation || '', t: s.task || '', a: s.action || '', r: s.result || '' },
     competencies: comps,
@@ -325,14 +333,25 @@ const EVIDENCE_LEVELS = [
   { min: 80, key: 'veryStrong', label: '매우 강함' },
   { min: 60, key: 'strong',     label: '강함' },
   { min: 40, key: 'growing',    label: '성장 중' },
-  { min: 1,  key: 'needMore',   label: '증거 필요' },
+  { min: 1,  key: 'needMore',   label: '증거 쌓는 중' },
   { min: 0,  key: 'none',       label: '아직 발견되지 않음' },
 ];
+/* 최소 증거 기준: 증거가 이 개수 미만이면 지수 수준을 강조하지 않고 '초기 증거'로 표시 */
+const MIN_EVIDENCE_FOR_LEVEL = 3;
+/* 경험당 동일 역량 핵심 증거 최대 반영 수 (중복 부풀림 방지) */
+const MAX_EVIDENCE_PER_EXPERIENCE = 2;
 const EVIDENCE_INDEX_DISCLAIMER =
   '※ 역량 증거지수는 K-CESA 공식 진단점수가 아니며, 등록된 경험에서 확인된 증거의 축적과 성장 정도를 보여주는 PORTRI AI의 성장지표입니다.';
+const GROWTH_BASIS_NOTE = '성장 변화는 등록한 경험의 활동 시점을 기준으로 분석합니다.';
 
 function levelOf(index) {
   return EVIDENCE_LEVELS.find(l => index >= l.min) || EVIDENCE_LEVELS[EVIDENCE_LEVELS.length - 1];
+}
+/* 표시용 수준: 최소 증거 기준 반영 (0=미발견, 1~2=초기 증거, 3+=지수 기반) */
+function displayLevelFor(evidenceCount, index) {
+  if (!evidenceCount) return { key: 'none', label: '아직 발견되지 않음', early: false, provisional: true };
+  if (evidenceCount < MIN_EVIDENCE_FOR_LEVEL) return { key: 'early', label: '초기 증거', early: true, provisional: true };
+  return Object.assign({ early: false, provisional: false }, levelOf(index));
 }
 function _stepScore(steps, n) {
   return (steps.find(s => n >= s.min) || steps[steps.length - 1]).score;
@@ -358,6 +377,29 @@ function termOf(date) {
 }
 function _monthsBetween(a, b) {
   return (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+}
+
+/* ---- 데이터 접근 헬퍼 (기존 데이터 안전 fallback) ---- */
+/* 활동 시점: experienceDate 우선, 없으면 레거시 date */
+function experienceDateOf(x) { return parseExperienceDate(x.experienceDate || x.date); }
+function experienceDateStr(x) { return x.experienceDate || x.date || ''; }
+/* 증거 강도: strengthLevel 우선, 레거시 evidenceStrength fallback */
+function strengthLevelOf(c) { return Math.min(4, Math.max(1, c.strengthLevel || c.evidenceStrength || 2)); }
+/* 검증 여부: 명시적으로 false일 때만 제외 (레거시 데이터는 포함) */
+function isVerified(c) { return c.verified !== false; }
+
+/* ---- 값 분리 (각각 독립 함수) ---- */
+function calcEvidenceCount(evidences) { return evidences.length; }
+function calcExperienceCount(evidences) { return new Set(evidences.map(e => e.expId)).size; }
+function calcCategoryCount(evidences) { return new Set(evidences.map(e => e.category)).size; }
+function calcPeriodCount(evidences) { return new Set(evidences.filter(e => e.when).map(e => termOf(e.when))).size; }
+/* 증거량 반영 개수: 경험당 최대 MAX_EVIDENCE_PER_EXPERIENCE 개까지만 (중복 부풀림 방지) */
+function cappedQuantityCount(evidences) {
+  const perExp = new Map();
+  evidences.forEach(e => perExp.set(e.expId, (perExp.get(e.expId) || 0) + 1));
+  let total = 0;
+  perExp.forEach(n => { total += Math.min(MAX_EVIDENCE_PER_EXPERIENCE, n); });
+  return total;
 }
 
 /* ---- 하위 5개 지표 (각각 독립 함수) ---- */
@@ -387,43 +429,47 @@ function calculateEvidenceIndex(parts) {
    asOf: 지정 시 '그 시점(발생일 기준)까지 존재했던 경험'만 사용 (과거의 나 비교용) */
 function evidenceIndexFor(compName, items, asOf, now) {
   const evidences = [];
-  const categories = new Set();
-  const terms = new Set();
-  const expIds = new Set();
   let mostRecent = null;
 
   (items || Store.items).forEach(x => {
-    const when = parseExperienceDate(x.date);
+    const when = experienceDateOf(x);
     if (asOf && (!when || when > asOf)) return;   // 과거 스냅샷: 그 시점 이후 경험 제외
     (x.competencies || []).forEach(c => {
       if (c.name !== compName) return;
-      const lvl = Math.min(4, Math.max(1, c.evidenceStrength || 2));
+      if (!isVerified(c)) return;                 // verified 증거만 계산
+      const lvl = strengthLevelOf(c);
       evidences.push({
         expId: x.id, title: x.title, category: x.category,
         categoryLabel: CAT[x.category]?.label || '경험',
         evidence: c.evidence, src: c.src, level: lvl,
         strengthReason: c.strengthReason || STRENGTH_LEVELS[lvl].desc,
-        date: x.date, when,
+        verified: isVerified(c),
+        date: experienceDateStr(x), when,
       });
-      categories.add(x.category);
-      expIds.add(x.id);
-      if (when) { terms.add(termOf(when)); if (!mostRecent || when > mostRecent) mostRecent = when; }
+      if (when && (!mostRecent || when > mostRecent)) mostRecent = when;
     });
   });
 
+  // 값 분리 (독립 함수)
+  const evidenceCount = calcEvidenceCount(evidences);
+  const experienceCount = calcExperienceCount(evidences);
+  const categoryCount = calcCategoryCount(evidences);
+  const periodCount = calcPeriodCount(evidences);
+
   const parts = {
-    quantity: calculateEvidenceQuantity(evidences.length),
+    quantity: calculateEvidenceQuantity(cappedQuantityCount(evidences)), // 경험당 최대 2개 캡
     strength: calculateEvidenceStrength(evidences.map(e => e.level)),
-    diversity: calculateExperienceDiversity(categories),
-    continuity: calculateContinuity(terms),
+    diversity: calculateExperienceDiversity(new Set(evidences.map(e => e.category))),
+    continuity: calculateContinuity(new Set(evidences.filter(e => e.when).map(e => termOf(e.when)))),
     recency: calculateRecency(mostRecent, now),
   };
   const index = calculateEvidenceIndex(parts);
   return {
-    name: compName, index, level: levelOf(index), parts,
-    evidenceCount: evidences.length,
-    experienceCount: expIds.size,
-    categoryCount: categories.size,
+    name: compName, index,
+    level: levelOf(index),                                  // 지수 기반 원시 수준
+    displayLevel: displayLevelFor(evidenceCount, index),    // 최소 증거 기준 반영 표시 수준
+    parts,
+    evidenceCount, experienceCount, categoryCount, periodCount,
     mostRecent, evidences,
   };
 }
@@ -435,7 +481,7 @@ function evidenceIndexAll(items, asOf, now) {
 /* 과거 스냅샷에 쓸 만한 경험이 있는지 (가짜 데이터 생성 금지 판단용) */
 function pastExperienceCount(items, asOf) {
   return (items || Store.items).filter(x => {
-    const w = parseExperienceDate(x.date);
+    const w = experienceDateOf(x);
     return w && w <= asOf;
   }).length;
 }

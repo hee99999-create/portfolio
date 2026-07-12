@@ -76,12 +76,13 @@ if (requireAuth()) {
     $('starS').textContent = x.star.s; $('starT').textContent = x.star.t;
     $('starA').textContent = x.star.a; $('starR').textContent = x.star.r;
     $('compList').innerHTML = x.competencies.map((c, i) => {
-      const lvl = Math.min(4, Math.max(1, c.evidenceStrength || 2));
+      const lvl = (typeof strengthLevelOf !== 'undefined') ? strengthLevelOf(c) : Math.min(4, Math.max(1, c.strengthLevel || c.evidenceStrength || 2));
       const s = (typeof STRENGTH_LEVELS !== 'undefined') ? STRENGTH_LEVELS[lvl] : { label: '', desc: '' };
+      const verified = c.verified !== false;
       return `
       <div class="card mt-2">
         <div class="flex between items-center">
-          <div><strong>${c.name}</strong> <span class="caption">K-CESA 역량 증거</span></div>
+          <div><strong>${c.name}</strong> <span class="caption">K-CESA 역량 증거${verified ? ' · 검증됨' : ''}</span></div>
           <span class="comp-chip">증거 강도 ${lvl}단계 · ${s.label}</span>
         </div>
         <p class="mt-2" style="color:var(--ink-soft)">“${c.evidence}”

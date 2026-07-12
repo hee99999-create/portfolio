@@ -9,42 +9,53 @@
 .chart-card { background:#fff; border:1px solid var(--hairline); border-radius:var(--r-card); padding:var(--s-4); }
 .chart-box { position:relative; height:360px; }
 
+/* AI 핵심 인사이트 */
+.insight { background:var(--grad); color:#fff; border-radius:var(--r-card); padding:var(--s-4); }
+.insight .k { font-size:12px; font-weight:700; letter-spacing:.02em; opacity:.9; }
+.insight p { color:#fff; font-size:1.12rem; line-height:1.65; margin-top:8px; }
+.insight .sub { font-size:13.5px; color:rgba(255,255,255,.85); margin-top:10px; }
+
 /* 요약 카드 */
 .sum-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--s-3); }
 .sum-card { background:#fff; border:1px solid var(--hairline); border-radius:16px; padding:var(--s-3); box-shadow:var(--shadow-card); }
 .sum-card .k { font-size:12px; font-weight:600; color:var(--ink-faint); }
 .sum-card .v { font-size:1.5rem; font-weight:700; margin-top:6px; letter-spacing:-0.01em; }
-.sum-card .m { font-size:13px; color:var(--ink-soft); margin-top:4px; }
+.sum-card .m { font-size:13px; color:var(--ink-soft); margin-top:6px; }
 .sum-card.accent { background:var(--accent-tint); border-color:transparent; }
 
+/* 성장 변화 스트립 */
+.growth { display:flex; align-items:flex-start; gap:16px; background:#fff; border:1px solid var(--hairline); border-radius:var(--r-card); padding:var(--s-3) var(--s-4); }
+.growth .ic { width:44px; height:44px; border-radius:12px; background:var(--accent-tint); color:var(--color-primary); display:flex; align-items:center; justify-content:center; font-size:22px; flex:none; }
+.growth .note { color:var(--ink-faint); font-size:12.5px; margin-top:4px; }
+
 /* 수준 배지 (색+텍스트 병행 — 색만으로 구분하지 않음) */
-.lvl { display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; padding:3px 10px; border-radius:var(--r-pill); white-space:nowrap; }
+.lvl { display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:700; padding:4px 12px; border-radius:var(--r-pill); white-space:nowrap; }
 .lvl::before { content:''; width:8px; height:8px; border-radius:50%; background:currentColor; flex:none; }
 .lvl.veryStrong { color:#5A48D6; background:rgba(108,92,231,.16); }
 .lvl.strong     { color:#6C5CE7; background:rgba(108,92,231,.12); }
 .lvl.growing    { color:#8574C9; background:rgba(139,123,242,.14); }
+.lvl.early      { color:#8574C9; background:rgba(139,123,242,.12); }
 .lvl.needMore   { color:#9795AB; background:var(--surface-parchment); }
 .lvl.none       { color:#9795AB; background:var(--surface-parchment); }
+.idxsub { font-size:12px; color:var(--ink-faint); font-variant-numeric:tabular-nums; }
 
 /* 표 */
 table.kc { width:100%; border-collapse:collapse; font-size:14px; }
 table.kc th, table.kc td { text-align:left; padding:12px 10px; border-bottom:1px solid var(--hairline); vertical-align:middle; }
 table.kc th { font-size:12px; color:var(--ink-faint); font-weight:600; }
-table.kc td.n { font-variant-numeric:tabular-nums; }
-.idxnum { font-weight:700; color:var(--color-primary); }
-.btn-ev { border:1px solid var(--hairline); background:#fff; color:var(--color-primary); font-weight:600;
-  border-radius:var(--r-pill); padding:6px 14px; font-size:13px; cursor:pointer; }
-.btn-ev:hover { background:var(--accent-tint); border-color:transparent; }
+.btn-why { border:1px solid var(--color-primary); background:var(--accent-tint); color:var(--color-primary); font-weight:600;
+  border-radius:var(--r-pill); padding:7px 15px; font-size:13px; cursor:pointer; white-space:nowrap; }
+.btn-why:hover { background:var(--color-primary); color:#fff; }
 
 /* 모바일 카드형 */
 .kc-cards { display:none; flex-direction:column; gap:12px; }
 .kc-cardrow { background:#fff; border:1px solid var(--hairline); border-radius:14px; padding:14px; }
 .kc-cardrow .top { display:flex; justify-content:space-between; align-items:center; gap:10px; }
-.kc-cardrow .grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 14px; margin-top:12px; font-size:13px; }
+.kc-cardrow .grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 14px; margin:12px 0; font-size:13px; }
 .kc-cardrow .grid .lab { color:var(--ink-faint); font-size:11.5px; }
 
 /* 증거 보기 모달 */
-.ev-comp { display:flex; flex-wrap:wrap; gap:8px 20px; margin-top:12px; font-size:13px; }
+.ev-comp { display:flex; flex-wrap:wrap; gap:8px 20px; margin-top:12px; font-size:13px; align-items:center; }
 .ev-comp b { color:var(--ink); font-variant-numeric:tabular-nums; }
 .why { background:var(--surface-parchment); border-radius:12px; padding:14px 16px; margin-top:16px; font-size:14px; line-height:1.6; }
 .ev-item { border:1px solid var(--hairline); border-radius:12px; padding:14px; margin-top:12px; }
@@ -73,14 +84,34 @@ table.kc td.n { font-variant-numeric:tabular-nums; }
     <h2>나의 역량 증거 포트폴리오</h2>
     <p class="muted mt-1">등록한 경험에서 발견된 검증 가능한 역량 증거와 성장 과정을 확인해 보세요.</p>
     <p class="fine mt-1" id="disclaimer"></p>
-    <div class="sum-grid mt-4" id="sumCards"></div>
-    <div class="btn-row mt-3" id="curCta"></div>
   </div>
 </section>
 
 <!-- 데이터 있을 때 -->
 <div id="hasData">
+
+<!-- ① AI 핵심 인사이트 -->
+<section class="tile tile--white compact" style="padding-top:0">
+  <div class="container">
+    <div class="insight" id="insight"></div>
+  </div>
+</section>
+
+<!-- ② 핵심 역량 요약 카드 -->
 <section class="tile tile--parchment">
+  <div class="container">
+    <h3>핵심 역량 요약</h3>
+    <div class="sum-grid mt-3" id="sumCards"></div>
+    <div class="btn-row mt-3" id="curCta"></div>
+
+    <!-- ③ 성장 변화 -->
+    <h3 class="mt-6">성장 변화</h3>
+    <div class="growth mt-3" id="growthStrip"></div>
+  </div>
+</section>
+
+<!-- ④ 가로 막대 + ⑤ 레이더 -->
+<section class="tile tile--white">
   <div class="container grid-2" style="align-items:start">
     <div class="chart-card">
       <h3>역량별 증거 수준</h3>
@@ -94,10 +125,13 @@ table.kc td.n { font-variant-numeric:tabular-nums; }
       <p class="fine mt-2" id="radarNote"></p>
     </div>
   </div>
+</section>
 
-  <div class="container mt-4">
+<!-- ⑥ 역량별 증거 현황 -->
+<section class="tile tile--parchment">
+  <div class="container">
     <div class="chart-card">
-      <div class="flex between items-center"><h3>역량별 증거 현황</h3><span class="caption">증거지수 0–100 · 성장지표</span></div>
+      <div class="flex between items-center"><h3>역량별 증거 현황</h3><span class="caption">증거 수준 중심 · 지수는 보조 지표</span></div>
       <div style="overflow-x:auto" class="mt-3">
         <table class="kc" id="kcTable"></table>
       </div>
@@ -106,7 +140,7 @@ table.kc td.n { font-variant-numeric:tabular-nums; }
   </div>
 </section>
 
-<!-- AI 성장 코칭 -->
+<!-- ⑦ AI 성장 코칭 -->
 <section class="tile tile--white">
   <div class="container">
     <div class="chart-card" style="border:none;background:var(--accent-tint)">
@@ -135,8 +169,9 @@ table.kc td.n { font-variant-numeric:tabular-nums; }
   <div class="modal" style="max-width:640px">
     <div class="flex between items-center">
       <div class="modal__title" id="evTitle"></div>
-      <button class="chip" onclick="closeEvidence()" aria-label="닫기">닫기</button>
+      <button class="chip" onclick="closeEvidence()" aria-label="증거 보기 닫기">닫기</button>
     </div>
+    <p class="caption mt-1">AI의 결론이 아니라, 이렇게 분석한 근거를 보여드립니다.</p>
     <div id="evMeta" class="ev-comp"></div>
     <div class="why" id="evWhy"></div>
     <h4 class="mt-4">이 수준을 뒷받침하는 증거</h4>
@@ -150,7 +185,7 @@ table.kc td.n { font-variant-numeric:tabular-nums; }
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 mountNav('competency'); mountFooter();
-const LEVEL_COLOR = { veryStrong:'#6C5CE7', strong:'#8B7BF2', growing:'#B9AEF9', needMore:'#D9D2F7', none:'#E9E7F4' };
+const LEVEL_COLOR = { veryStrong:'#6C5CE7', strong:'#8B7BF2', growing:'#B9AEF9', early:'#C7BEF6', needMore:'#D9D2F7', none:'#E9E7F4' };
 
 if (requireAuth()) {
   Store.seedIfEmpty();
@@ -166,12 +201,13 @@ if (requireAuth()) {
   if (items.length === 0 || totalEvidence === 0) {
     $('hasData').classList.add('hidden');
     $('noData').classList.remove('hidden');
-    $('sumCards').innerHTML = '';
   } else {
-    renderSummary(all, items, now);
-    renderCurCta();
-    renderTable(all, now);
     const past = buildPast(items, now);
+    renderInsight(all, items, now, past);
+    renderSummary(all, past);
+    renderCurCta();
+    renderGrowth(all, past);
+    renderTable(all, now);
     renderCharts(all, past);
     renderCoach(all);
   }
@@ -182,43 +218,60 @@ if (requireAuth()) {
     if (pastExperienceCount(items, asOf) === 0) return null;
     return evidenceIndexAll(items, asOf, now);
   }
+  function grownList(all, past) {
+    if (!past) return [];
+    return all.map((c, i) => ({ c, delta: c.index - past[i].index, ev: c.evidenceCount - past[i].evidenceCount }))
+      .filter(g => g.delta > 0 || g.ev > 0).sort((a, b) => b.delta - a.delta);
+  }
 
-  /* ---- 요약 카드 3개 ---- */
-  function renderSummary(all, items, now) {
-    const sorted = [...all].sort((a, b) => b.index - a.index);
-    const strongest = sorted[0];
-    const weakest = [...all].sort((a, b) => a.index - b.index)[0];
+  /* ---- ① AI 핵심 인사이트 ---- */
+  function renderInsight(all, items, now, past) {
+    const ranked = [...all].sort((a, b) => b.index - a.index);
+    const strongest = ranked[0];
+    const established = all.filter(c => c.evidenceCount >= MIN_EVIDENCE_FOR_LEVEL);
+    const early = all.filter(c => c.evidenceCount > 0 && c.evidenceCount < MIN_EVIDENCE_FOR_LEVEL);
+    const grown = grownList(all, past)[0];
 
-    // 성장: 과거 대비
-    const asOf = monthsAgo(6, now);
-    const hasPast = pastExperienceCount(items, asOf) > 0;
-    let growCard;
-    if (!hasPast) {
-      growCard = { k: '가장 성장한 역량', v: '성장 데이터 준비 중', m: '경험을 더 쌓으면 성장 변화를 확인할 수 있어요.' };
-    } else {
-      const past = evidenceIndexAll(items, asOf, now);
-      const grown = all.map((c, i) => ({ c, delta: c.index - past[i].index, ev: c.evidenceCount - past[i].evidenceCount }))
-        .sort((a, b) => b.delta - a.delta)[0];
-      growCard = grown && grown.delta > 0
-        ? { k: '가장 성장한 역량', v: grown.c.name, m: `6개월간 증거 +${grown.ev}개 · 증거지수 +${grown.delta}` }
-        : { k: '가장 성장한 역량', v: '성장 데이터 준비 중', m: '최근 6개월간 새 증거가 아직 없어요.' };
-    }
+    let lead = `지금까지 <b>${items.length}개</b>의 경험에서 <b>${totalEvidence}개</b>의 검증 증거가 쌓였어요. `;
+    lead += established.length
+      ? `그중 <b>${strongest.name}</b> 역량의 증거가 가장 두껍습니다(${strongest.displayLevel.label}).`
+      : `아직 대부분 역량이 초기 증거 단계예요 — 경험을 조금만 더 쌓으면 수준이 또렷해집니다.`;
+
+    let sub = '';
+    if (grown) sub = `최근 6개월간 <b>${grown.c.name}</b> 역량에서 검증 증거가 가장 많이 늘었어요(+${grown.ev}개).`;
+    else if (past) sub = '최근 6개월간 새로 추가된 증거는 아직 없어요.';
+    else sub = '경험을 계속 기록하면 성장 변화도 함께 보여드릴게요.';
+    if (early.length) sub += ` ${early.map(c => c.name).join(', ')} 역량은 아직 초기 증거 단계입니다.`;
+
+    $('insight').innerHTML = `<div class="k">AI 핵심 인사이트</div><p>${lead}</p><div class="sub">${sub}</div>`;
+  }
+
+  /* ---- ② 요약 카드 3개 ---- */
+  function renderSummary(all, past) {
+    const strongest = [...all].sort((a, b) => b.index - a.index)[0];
+    const next = [...all].sort((a, b) => a.index - b.index)[0];
+    const grown = grownList(all, past)[0];
+    const growCard = !past
+      ? { v: '성장 데이터 준비 중', m: '경험을 더 쌓으면 성장 변화를 확인할 수 있어요.' }
+      : grown
+        ? { v: grown.c.name, m: `6개월간 증거 +${grown.ev}개 · 증거지수 +${grown.delta}` }
+        : { v: '성장 데이터 준비 중', m: '최근 6개월간 새 증거가 아직 없어요.' };
 
     $('sumCards').innerHTML = `
       <div class="sum-card accent">
         <div class="k">가장 강한 역량</div>
         <div class="v">${strongest.name}</div>
-        <div class="m">검증 증거 ${strongest.evidenceCount}개 · <span class="lvl ${strongest.level.key}">${strongest.level.label}</span></div>
+        <div class="m"><span class="lvl ${strongest.displayLevel.key}">${strongest.displayLevel.label}</span> · 검증 증거 ${strongest.evidenceCount}개</div>
       </div>
       <div class="sum-card">
-        <div class="k">${growCard.k}</div>
+        <div class="k">가장 성장한 역량</div>
         <div class="v">${growCard.v}</div>
         <div class="m">${growCard.m}</div>
       </div>
       <div class="sum-card">
-        <div class="k">증거가 필요한 역량</div>
-        <div class="v">${weakest.name}</div>
-        <div class="m">현재 검증 증거 ${weakest.evidenceCount}개 · <span class="lvl ${weakest.level.key}">${weakest.level.label}</span></div>
+        <div class="k">다음으로 채워볼 역량</div>
+        <div class="v">${next.name}</div>
+        <div class="m"><span class="lvl ${next.displayLevel.key}">${next.displayLevel.label}</span> · 검증 증거 ${next.evidenceCount}개</div>
       </div>`;
   }
 
@@ -229,38 +282,57 @@ if (requireAuth()) {
       : '<a class="btn btn--ghost" href="curricular.html" style="padding:7px 16px;font-size:14px">+ 교과 성적도 기록하기</a>';
   }
 
-  /* ---- 표 + 모바일 카드 ---- */
+  /* ---- ③ 성장 변화 ---- */
+  function renderGrowth(all, past) {
+    const grown = grownList(all, past);
+    let body;
+    if (!past) {
+      body = `<div><strong>비교할 과거 데이터가 아직 충분하지 않습니다.</strong>
+        <div class="note">${GROWTH_BASIS_NOTE} 경험을 계속 기록하면 성장 변화를 확인할 수 있어요.</div></div>`;
+    } else if (!grown.length) {
+      body = `<div><strong>최근 6개월간 새로 추가된 검증 증거가 아직 없어요.</strong>
+        <div class="note">${GROWTH_BASIS_NOTE}</div></div>`;
+    } else {
+      const top = grown.slice(0, 3).map(g => `<b>${g.c.name}</b> +${g.ev}개`).join(' · ');
+      body = `<div><strong>최근 6개월간 ${grown.length}개 역량에서 검증 증거가 늘었어요.</strong>
+        <div class="mt-1" style="color:var(--ink-soft);font-size:14px">${top}</div>
+        <div class="note">${GROWTH_BASIS_NOTE}</div></div>`;
+    }
+    $('growthStrip').innerHTML = `<span class="ic" aria-hidden="true">📈</span>${body}`;
+  }
+
+  /* ---- ⑥ 표 + 모바일 카드 (수준 우선, 지수는 보조) ---- */
   function renderTable(all, now) {
     $('kcTable').innerHTML =
       `<thead><tr>
-        <th>역량</th><th>증거 수준</th><th style="text-align:right">역량 증거지수</th>
+        <th>역량</th><th>증거 수준</th>
         <th style="text-align:right">검증 증거</th><th style="text-align:right">관련 경험</th>
-        <th>경험 다양성</th><th>최근 활동</th><th></th></tr></thead>
+        <th>경험 다양성</th><th>최근 활동</th><th style="text-align:right">증거지수</th><th></th></tr></thead>
       <tbody>${all.map(c => `
         <tr>
           <td><strong>${c.name}</strong></td>
-          <td><span class="lvl ${c.level.key}">${c.level.label}</span></td>
-          <td class="n" style="text-align:right"><span class="idxnum">${c.index}</span></td>
-          <td class="n" style="text-align:right">${c.evidenceCount}개</td>
-          <td class="n" style="text-align:right">${c.experienceCount}건</td>
+          <td><span class="lvl ${c.displayLevel.key}">${c.displayLevel.label}</span></td>
+          <td style="text-align:right">${c.evidenceCount}개</td>
+          <td style="text-align:right">${c.experienceCount}건</td>
           <td>${c.categoryCount}개 유형</td>
           <td>${relTime(c.mostRecent, now)}</td>
-          <td style="text-align:right"><button class="btn-ev" onclick="openEvidence('${c.name}')" aria-label="${c.name} 증거 보기">증거 보기</button></td>
+          <td style="text-align:right"><span class="idxsub">${c.evidenceCount >= MIN_EVIDENCE_FOR_LEVEL ? c.index : '–'}</span></td>
+          <td style="text-align:right"><button class="btn-why" onclick="openEvidence('${c.name}')" aria-label="${c.name} 역량을 왜 이렇게 분석했는지 근거 보기">왜 이렇게 분석했나요?</button></td>
         </tr>`).join('')}</tbody>`;
 
     $('kcCards').innerHTML = all.map(c => `
       <div class="kc-cardrow">
         <div class="top">
           <strong>${c.name}</strong>
-          <span class="lvl ${c.level.key}">${c.level.label}</span>
+          <span class="lvl ${c.displayLevel.key}">${c.displayLevel.label}</span>
         </div>
         <div class="grid">
-          <div><div class="lab">역량 증거지수</div><span class="idxnum">${c.index}</span></div>
           <div><div class="lab">검증 증거 · 관련 경험</div>${c.evidenceCount}개 · ${c.experienceCount}건</div>
           <div><div class="lab">경험 다양성</div>${c.categoryCount}개 유형</div>
           <div><div class="lab">최근 활동</div>${relTime(c.mostRecent, now)}</div>
+          <div><div class="lab">증거지수 (보조)</div><span class="idxsub">${c.evidenceCount >= MIN_EVIDENCE_FOR_LEVEL ? c.index : '증거 3개 이상부터'}</span></div>
         </div>
-        <div class="btn-row mt-3"><button class="btn-ev" onclick="openEvidence('${c.name}')" aria-label="${c.name} 증거 보기">증거 보기</button></div>
+        <button class="btn-why" style="width:100%" onclick="openEvidence('${c.name}')" aria-label="${c.name} 역량을 왜 이렇게 분석했는지 근거 보기">왜 이렇게 분석했나요?</button>
       </div>`).join('');
   }
 
@@ -269,8 +341,7 @@ if (requireAuth()) {
     const m = (now.getFullYear() - date.getFullYear()) * 12 + (now.getMonth() - date.getMonth());
     if (m <= 0) return '이번 달';
     if (m < 12) return m + '개월 전';
-    const y = Math.floor(m / 12);
-    return y + '년 전';
+    return Math.floor(m / 12) + '년 전';
   }
 
   /* ---- 차트 ---- */
@@ -280,12 +351,11 @@ if (requireAuth()) {
     const labels = all.map(c => c.name);
     const grid = 'rgba(108,92,231,0.12)';
 
-    // 가로 막대 (수준별 색 + 표에 텍스트 동일 정보)
     new Chart($('barChart'), {
       type: 'bar',
       data: { labels, datasets: [{
         label: '역량 증거지수', data: all.map(c => c.index),
-        backgroundColor: all.map(c => LEVEL_COLOR[c.level.key]),
+        backgroundColor: all.map(c => LEVEL_COLOR[c.displayLevel.key]),
         borderRadius: 6, borderSkipped: false, barPercentage: 0.72,
       }] },
       options: {
@@ -298,13 +368,13 @@ if (requireAuth()) {
           legend: { display: false },
           tooltip: { callbacks: { label: (ctx) => {
             const c = all[ctx.dataIndex];
-            return [`증거지수 ${c.index} · ${c.level.label}`, `검증 증거 ${c.evidenceCount}개 · 관련 경험 ${c.experienceCount}건`, `경험 다양성 ${c.categoryCount}개 유형`];
+            return [`${c.displayLevel.label}${c.evidenceCount >= MIN_EVIDENCE_FOR_LEVEL ? ' · 증거지수 ' + c.index : ''}`,
+              `검증 증거 ${c.evidenceCount}개 · 관련 경험 ${c.experienceCount}건`, `경험 다양성 ${c.categoryCount}개 유형`];
           } } },
         },
       },
     });
 
-    // 레이더 현재 vs 과거
     const ds = [{
       label: '현재의 나', data: all.map(c => c.index),
       borderColor: '#6C5CE7', backgroundColor: 'rgba(108,92,231,0.16)',
@@ -316,10 +386,10 @@ if (requireAuth()) {
         borderColor: '#B9AEF9', backgroundColor: 'transparent',
         borderWidth: 1.5, borderDash: [5, 4], pointRadius: 2.5, pointBackgroundColor: '#B9AEF9', fill: false,
       });
-      $('radarNote').textContent = '';
+      $('radarNote').textContent = GROWTH_BASIS_NOTE;
     } else {
       $('radarCap').textContent = '현재의 나';
-      $('radarNote').textContent = '비교할 과거 데이터가 아직 충분하지 않습니다. 경험을 계속 기록하면 성장 변화를 확인할 수 있어요.';
+      $('radarNote').textContent = '비교할 과거 데이터가 아직 충분하지 않습니다. ' + GROWTH_BASIS_NOTE;
     }
     new Chart($('radarChart'), {
       type: 'radar',
@@ -333,44 +403,41 @@ if (requireAuth()) {
     });
   }
 
-  /* ---- AI 성장 코칭 (부족 단정 금지) ---- */
+  /* ---- ⑦ AI 성장 코칭 (등록 데이터만 근거, 능력 단정 금지) ---- */
   function renderCoach(all) {
     const target = [...all].sort((a, b) => a.index - b.index)[0];
-    const hasSome = target.evidenceCount > 0;
     const action = (typeof GAP_ACTION !== 'undefined' && GAP_ACTION[target.name]) || '관련 경험을 추가';
-    const line1 = hasSome
-      ? `<strong>${target.name}</strong> 역량을 보여주는 검증 가능한 경험이 아직 충분하지 않습니다. (현재 검증 증거 ${target.evidenceCount}개)`
-      : `<strong>${target.name}</strong> 역량을 뒷받침하는 검증 가능한 증거가 아직 발견되지 않았습니다.`;
     $('coachBody').innerHTML = `
-      <p>${line1}</p>
-      <p class="mt-2" style="color:var(--ink-soft)">${action} 등의 경험을 추가하면 이 역량의 새로운 증거를 만들 수 있어요. 지금 부족하다는 뜻이 아니라, 아직 기록되지 않았을 뿐입니다.</p>`;
+      <p>현재 등록된 경험에서는 <strong>${target.name}</strong> 역량을 보여주는 검증 가능한 증거가 충분히 발견되지 않았습니다. (현재 검증 증거 ${target.evidenceCount}개)</p>
+      <p class="mt-2" style="color:var(--ink-soft)">${action} 같은 경험을 추가로 기록하면 이 역량의 새로운 증거를 만들 수 있어요. 능력이 부족하다는 뜻이 아니라, 아직 이 역량을 보여주는 경험이 기록되지 않았을 뿐입니다.</p>`;
   }
 
-  /* ---- 증거 보기 모달 ---- */
+  /* ---- ⑨ "왜 이렇게 분석했나요?" 모달 ---- */
   window.openEvidence = (name) => {
     const c = window._all.find(x => x.name === name);
     if (!c) return;
     const now = new Date();
-    $('evTitle').textContent = name;
+    $('evTitle').textContent = name + ' — 왜 이렇게 분석했나요?';
     $('evMeta').innerHTML = `
-      <span><span class="lvl ${c.level.key}">${c.level.label}</span></span>
-      <span>역량 증거지수 <b>${c.index}</b></span>
+      <span class="lvl ${c.displayLevel.key}">${c.displayLevel.label}</span>
       <span>검증 증거 <b>${c.evidenceCount}</b>개</span>
       <span>관련 경험 <b>${c.experienceCount}</b>건</span>
       <span>경험 다양성 <b>${c.categoryCount}</b>개 유형</span>
-      <span>최근 활동 <b>${relTime(c.mostRecent, now)}</b></span>`;
+      <span>활동 기간 <b>${c.periodCount}</b>개 학기</span>
+      <span>최근 활동 <b>${relTime(c.mostRecent, now)}</b></span>
+      ${c.evidenceCount >= MIN_EVIDENCE_FOR_LEVEL ? `<span>증거지수(보조) <b>${c.index}</b></span>` : ''}`;
 
-    // 왜 이 수준인가요? (증거 관점 — 능력 단정 아님)
     const p = c.parts;
+    let whyHead;
+    if (c.evidenceCount === 0) whyHead = '아직 이 역량을 뒷받침하는 검증 증거가 없습니다.';
+    else if (c.evidenceCount < MIN_EVIDENCE_FOR_LEVEL) whyHead = `아직 <b>초기 증거</b> 단계입니다(검증 증거 ${c.evidenceCount}개). 증거가 3개 이상 쌓이면 수준을 또렷하게 보여드려요.`;
+    else whyHead = `이 수준은 <b>검증 증거 ${c.evidenceCount}개</b>를 5가지 관점으로 종합한 결과입니다.`;
     const lift = Object.entries(p).sort((a, b) => a[1] - b[1])[0][0];
-    const liftMsg = {
-      quantity: '같은 역량의 증거를 더 쌓으면', strength: '측정 가능한 성과가 드러나는 경험을 기록하면',
-      diversity: '다른 유형의 경험에서도 이 역량이 나타나면', continuity: '여러 학기에 걸쳐 꾸준히 기록하면',
-      recency: '최근 경험을 추가하면',
-    }[lift];
-    $('evWhy').innerHTML = `이 수준은 <b>검증 증거 ${c.evidenceCount}개</b>(증거량 ${p.quantity}), 평균 증거 강도 ${p.strength},
-      경험 다양성 ${p.diversity}(${c.categoryCount}개 유형), 지속성 ${p.continuity}, 최근성 ${p.recency}를
-      종합한 결과입니다. <br><span style="color:var(--color-primary)">${liftMsg} 증거지수가 더 올라갑니다.</span>`;
+    const liftMsg = { quantity: '같은 역량의 증거를 더 쌓으면', strength: '측정 가능한 성과가 드러나는 경험을 기록하면',
+      diversity: '다른 유형의 경험에서도 이 역량이 나타나면', continuity: '여러 학기에 걸쳐 꾸준히 기록하면', recency: '최근 경험을 추가하면' }[lift];
+    $('evWhy').innerHTML = `${whyHead}<br>
+      <span class="caption">증거량 ${p.quantity} · 증거 강도 ${p.strength} · 경험 다양성 ${p.diversity} · 지속성 ${p.continuity} · 최근성 ${p.recency}</span>
+      <br><span style="color:var(--color-primary)">${liftMsg} 증거가 더 두꺼워집니다.</span>`;
 
     $('evList').innerHTML = c.evidences.length ? c.evidences.map(e => `
       <div class="ev-item">
@@ -381,7 +448,7 @@ if (requireAuth()) {
         <p class="quote">“${e.evidence}”</p>
         <p class="fine">근거: ${e.strengthReason}</p>
         <div class="flex between items-center mt-2">
-          <span class="caption">${e.date || '날짜 미상'} · 출처 ${e.src}</span>
+          <span class="caption">활동 시점 ${e.date || '미상'} · 출처 ${e.src}</span>
           <a class="link" href="card-detail.html?id=${e.expId}">경험 상세 보기 ›</a>
         </div>
       </div>`).join('')

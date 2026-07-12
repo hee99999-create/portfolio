@@ -33,6 +33,14 @@
 4. **다른 학생과 비교하지 않고, 과거의 나와 현재의 나를 비교한다.**
 5. **Evidence가 부족하다는 것은 학생의 역량이 부족하다는 의미가 아니다.** ("부족한 역량" 표현 금지)
 6. **모든 역량 분석과 성장 코칭은 등록된 경험과 검증 Evidence를 근거로 한다.**
+7. **AI의 판단 결과(결론)보다 "왜 그렇게 분석했는가"를 보여주는 Evidence가 우선한다.** — 화면의 핵심 CTA는 "왜 이렇게 분석했나요?"이며, 지수 숫자보다 수준·근거를 앞세운다.
+
+**신뢰성 보완 (2026-07, 2차):**
+- **최소 증거 기준**: 검증 증거 0개=아직 발견되지 않음, 1~2개=**초기 증거**(지수 숫자 강조 안 함), 3개+(=`MIN_EVIDENCE_FOR_LEVEL`)부터 지수 기반 수준 표시. `displayLevelFor()`.
+- **중복 부풀림 방지**: 한 경험에서 동일 역량 증거는 증거량 계산에 최대 2개(`MAX_EVIDENCE_PER_EXPERIENCE`)까지만 반영. `cappedQuantityCount()`.
+- **값 분리(독립 함수)**: `calcEvidenceCount / calcExperienceCount / calcCategoryCount / calcPeriodCount`.
+- **Evidence 필드**: `strengthLevel`(1~4) · `strengthReason` · `verified`. **verified=true 인 증거만 계산에 반영**(레거시 데이터는 `verified!==false`로 안전 포함). backend는 원문 대조 통과 시 `verified:true` 표기.
+- **날짜 분리**: `experienceDate`(활동 시점) vs `createdAt`(등록 시점). 성장 비교는 **experienceDate 기준**, 기존 데이터는 `experienceDate ?? date` fallback(마이그레이션 쓰기 없음 → 데이터 보존).
 
 **금지 표현**: 나의 역량 점수 · K-CESA 점수 · 학과평균 · 동일학년 평균 · 다른 학생과의 비교 · 부족한 역량.
 **대체 표현(수준)**: 아직 발견되지 않음 · 증거 필요 · 성장 중 · 강함 · 매우 강함.

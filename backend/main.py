@@ -86,11 +86,11 @@ EXTRACT_FUNCTION = {
                             "name": {"type": "string", "enum": KCESA},
                             "confidence": {"type": "integer", "enum": [1, 2, 3, 4, 5]},
                             "evidence": {"type": "string", "description": "원문에서 그대로 인용한 문장"},
-                            "evidenceStrength": {"type": "integer", "enum": [1, 2, 3, 4], "description": "1:단순참여 2:구체적행동 3:주도·문제해결 4:성과입증 (인용 원문 근거로만 판단)"},
-                            "strength_reason": {"type": "string", "description": "그 강도로 판단한 이유 — 원문에 나타난 사실로 설명"},
+                            "strengthLevel": {"type": "integer", "enum": [1, 2, 3, 4], "description": "1:단순참여 2:구체적행동 3:주도·문제해결 4:성과입증 (인용 원문 근거로만 판단)"},
+                            "strength_reason": {"type": "string", "description": "그 강도로 판단한 이유 — 원문에 나타난 사실로 설명 (strengthLevel과 반드시 함께 반환)"},
                             "source_ref": {"type": "string", "description": "인용 위치(예: README.md, 3번째 문단)"},
                         },
-                        "required": ["name", "confidence", "evidence", "evidenceStrength", "strength_reason", "source_ref"],
+                        "required": ["name", "confidence", "evidence", "strengthLevel", "strength_reason", "source_ref"],
                     },
                 },
             },
@@ -178,10 +178,12 @@ async def analyze(req: AnalyzeRequest):
         raise HTTPException(502, "결과 파싱 실패.")
 
     # 4) 증거 검증: 인용문이 실제 원문에 존재하는 역량만 통과 (할루시네이션 차단)
-    verified = [
-        c for c in result.get("competencies", [])
-        if c.get("evidence") and c["evidence"][:40] in content
-    ]
+    #    통과한 증거는 verified=True 로 표기 → 프론트 Evidence Index 계산에 반영됨
+    verified = []
+    for c in result.get("competencies", []):
+        if c.get("evidence") and c["evidence"][:40] in content:
+            c["verified"] = True
+            verified.append(c)
     result["competencies"] = verified
     result["source"] = src
     result["taxonomy"] = "K-CESA"
