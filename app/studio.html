@@ -154,6 +154,22 @@ if (requireAuth()) {
   }
   /* 프로필(사진·연락처·학력) */
   function getProfile() { try { return JSON.parse(localStorage.getItem('cda_profile')) || {}; } catch { return {}; } }
+  /* 교과(성적) 요약 — 이력서/포트폴리오에 반영 */
+  function curricularSummary() {
+    const cur = (typeof Curricular !== 'undefined') ? Curricular.data : null;
+    if (!cur || !cur.courses || !cur.courses.length) return null;
+    let credits = 0, pts = 0;
+    cur.courses.forEach(c => {
+      const cr = Number(c.credit) || 0;
+      const gp = (typeof GRADE_POINT !== 'undefined' ? GRADE_POINT[c.grade] : 0) || 0;
+      credits += cr; pts += cr * gp;
+    });
+    const gpa = credits ? (pts / credits).toFixed(2) : '-';
+    const agg = aggregateKCESA();
+    const top = agg.labels.map((l, i) => ({ name: l, score: agg.curricular[i] }))
+      .filter(x => x.score > 0).sort((a, b) => b.score - a.score).slice(0, 3);
+    return { courses: cur.courses, credits, gpa, top };
+  }
   window.onPhoto = () => {
     const f = $('pPhoto').files[0]; if (!f) return;
     const reader = new FileReader();
@@ -255,8 +271,13 @@ if (requireAuth()) {
         ${x.description ? `<div class="caption mt-1">${x.description}</div>` : ''}
         <div class="exp-card__chips mt-1">${x.competencies.map(cc => `<span class="comp-chip">${cc.name}</span>`).join('')}</div></div></div>`).join('')}
       </div>`).join('');
+    const cs = curricularSummary();
+    const academic = cs ? `<div class="doc-section"><h3>학업 · 교과 이수</h3>
+      <p class="caption">이수 ${cs.courses.length}과목 · ${cs.credits}학점 · 평점(GPA) ${cs.gpa}${cs.top.length ? ' · 교과 기반 역량 ' + cs.top.map(t => t.name).join(', ') : ''}</p>
+      ${cs.courses.map(c => `<div class="res-row"><div class="res-date">${c.division || ''}</div><div><strong>${c.name}</strong> <span class="caption">· ${c.credit}학점 · ${c.grade}</span></div></div>`).join('')}
+      </div>` : '';
     const body = `<div class="doc-section"><h3>핵심 역량</h3><div class="exp-card__chips">${topComp.map(n => `<span class="comp-chip">${n}</span>`).join('')}</div></div>`
-      + sections + `<p class="fine mt-4">본 이력서의 모든 항목은 증빙자료에 근거합니다. (총 ${items.length}건)</p>`;
+      + academic + sections + `<p class="fine mt-4">본 이력서의 모든 항목은 증빙자료에 근거합니다. (총 ${items.length}건)</p>`;
     const p = getProfile();
     const contact = [p.phone, p.email || user.email].filter(Boolean).join(' · ');
     const edu = [p.school, p.major, p.grade].filter(Boolean).join(' · ');
@@ -268,7 +289,11 @@ if (requireAuth()) {
   /* 포트폴리오 */
   function renderPortfolio() {
     let c = 0;
-    const body = items.map(x => {
+    const cs = curricularSummary();
+    const curBlock = cs ? `<div class="doc-section"><h3>교과 역량</h3>
+      <p class="caption">전공·교양 이수에서 드러난 역량 · 평점(GPA) ${cs.gpa}</p>
+      <div class="exp-card__chips mt-2">${cs.top.map(t => `<span class="comp-chip">${t.name} ${t.score}점</span>`).join('')}</div></div>` : '';
+    const body = curBlock + items.map(x => {
       const chips = x.competencies.map(cc => { c++; return `<span class="comp-chip">${cc.name} ${cite(c, { ...cc, from: x.title })}</span>`; }).join('');
       return `<div class="pf-item"><span class="exp-tag" style="font-size:11px;color:var(--color-primary);background:var(--accent-tint);padding:3px 10px;border-radius:999px">${CAT[x.category]?.label}</span>
         <h3 style="margin-top:8px">${x.title}</h3>
