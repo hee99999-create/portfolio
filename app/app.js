@@ -113,22 +113,40 @@ const Store = {
    경험 생성 (링크 / 파일+카테고리 / 성적)
    ============================================================ */
 function nowISO() { try { return new Date().toISOString(); } catch { return ''; } }
+/* 원문(자유서술)에서 실제 문장을 그대로 잘라 증거 후보로 만든다.
+   각 조각은 원문의 부분 문자열이므로 verifyEvidenceAgainstSource 로 검증하면 통과한다.
+   (lookbehind 없이 문장부호 포함해 매칭 — 구형 브라우저 호환) */
+function mockEvidenceSentences(text) {
+  if (!text) return [];
+  const matches = String(text).match(/[^.!?。]+[.!?。]/g) || [];
+  return matches.map(s => s.trim()).filter(s => s.length >= 8);
+}
 function makeExperience({ source, category, title, org, date, description, url, files }) {
   const lvl = MOCK_STRENGTH_BY_CATEGORY[category] || 2;
-  const comps = (CATEGORY_COMPETENCY[category] || ['자기관리']).map((name, i) => ({
-    name,
-    confidence: 3 + Math.floor(Math.random() * 3), // 3~5 (레거시 호환)
-    pct: 60 + Math.floor(Math.random() * 40),      // 60~99 (레거시 호환)
-    evidence: EVIDENCE_BY_COMP[name],
-    competencyReason: COMPETENCY_REASON_BY_COMP[name] || `${name} 역량과 연결되는 행동이 확인됩니다.`,
-    strengthLevel: lvl,                             // 1~4 (증거 강도)
-    evidenceStrength: lvl,                          // 레거시 별칭 (구버전 화면 호환)
-    strengthReason: `${CAT[category]?.label || '경험'}의 "${(description || EVIDENCE_BY_COMP[name]).slice(0, 40)}"에서 ${STRENGTH_LEVELS[lvl].desc}`,
-    verified: true,                                 // 계산에 반영되는 검증된 증거
-    src: source === 'link' ? (url || '원본 링크')
-       : source === 'grade' ? '성적증명서'
-       : (files && files[0] ? files[0] : '증빙자료'),
-  }));
+  // 사용자가 원문(자유서술)을 남겼으면 그 원문에서 실제 문장을 증거로 사용한다.
+  // (템플릿 boilerplate 대신 → "원문에서 근거를 발견"한다는 핵심 가치를 mock에서도 지킴)
+  const sentences = mockEvidenceSentences(description);
+  const comps = (CATEGORY_COMPETENCY[category] || ['자기관리']).map((name, i) => {
+    const fromText = sentences.length ? sentences[i % sentences.length] : null;
+    const evidence = fromText || EVIDENCE_BY_COMP[name];
+    // 원문에서 추출한 문장은 원문 대조로 검증(정직한 verified). 원문이 없으면(링크 등)
+    // 검증할 소스가 없으므로 기존 데모 동작(true)을 유지한다.
+    const verified = fromText ? verifyEvidenceAgainstSource(evidence, description) : true;
+    return {
+      name,
+      confidence: 3 + Math.floor(Math.random() * 3), // 3~5 (레거시 호환)
+      pct: 60 + Math.floor(Math.random() * 40),      // 60~99 (레거시 호환)
+      evidence,
+      competencyReason: COMPETENCY_REASON_BY_COMP[name] || `${name} 역량과 연결되는 행동이 확인됩니다.`,
+      strengthLevel: lvl,                             // 1~4 (증거 강도)
+      evidenceStrength: lvl,                          // 레거시 별칭 (구버전 화면 호환)
+      strengthReason: `${CAT[category]?.label || '경험'}의 "${(fromText || description || EVIDENCE_BY_COMP[name]).slice(0, 40)}"에서 ${STRENGTH_LEVELS[lvl].desc}`,
+      verified,                                       // 원문에서 추출한 증거만 정직하게 검증됨
+      src: source === 'link' ? (url || '원본 링크')
+         : source === 'grade' ? '성적증명서'
+         : (files && files[0] ? files[0] : '증빙자료'),
+    };
+  });
   const label = CAT[category]?.label || '경험';
   return {
     id: '2025-' + String(Math.floor(Math.random() * 9000) + 1000),

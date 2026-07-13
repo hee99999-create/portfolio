@@ -49,6 +49,11 @@
 - **문서 생성** studio는 **verified evidence만** 사용하고 "선택 경험 N · 검증 Evidence M개 기반" 표기. 선택 해제한 경험은 문서에서 제외.
 - **E2E 테스트**: `tests/portri-core-flow.spec.js`(Playwright). `npm test`. deterministic 7종 + live-AI 1종(백엔드 없으면 SKIP=BLOCKED).
 
+**배포 사이트 점검 보완 (2026-07, 4차):**
+- **Mock 증거의 원문화(핵심)**: `makeExperience`는 사용자가 남긴 원문(`description`)이 있으면 그 원문에서 **실제 문장을 그대로 잘라(`mockEvidenceSentences`) 증거로 사용**하고 `verifyEvidenceAgainstSource`로 정직하게 검증한다. 예전엔 항상 `EVIDENCE_BY_COMP` 템플릿을 쓰고 `verified:true`를 하드코딩해, 배포(Mock) 사용자에게 원문과 무관한 증거가 "검증됨"으로 표시되는 핵심 가치 위반이 있었다. 원문이 없을 때(링크 등)만 템플릿으로 폴백한다.
+- **홈 첫 화면 흐름**: 5단계를 "경험 기록 → AI가 근거 발견 → 역량 자산 축적 → 성장 확인 → 문서 완성"으로 정렬해 실제 제품 철학과 일치시킴("부족한 역량" 문구 제거).
+- **프로덕션 Mock 전략(향후 과제)**: 현재는 `AI 실패 → 자동 Mock 전환`이지만, 실서비스에서는 `AI 실패 → 분석 실패 안내 → 재시도` 구조가 더 적절하다. Mock을 실제 AI 분석으로 오해하지 않도록 데모 라벨(⚪ 데모/규칙 기반)은 유지·강화할 것. 배포 https 사이트는 http 로컬 백엔드를 mixed-content로 호출 불가하므로 항상 Mock으로 동작함을 전제.
+
 **금지 표현**: 나의 역량 점수 · K-CESA 점수 · 학과평균 · 동일학년 평균 · 다른 학생과의 비교 · 부족한 역량.
 **대체 표현(수준)**: 아직 발견되지 않음 · 증거 필요 · 성장 중 · 강함 · 매우 강함.
 
