@@ -25,6 +25,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
 from pydantic import BaseModel, Field
 
+from evidence_verification import verify_evidence_against_source, dedupe_competencies_by_evidence
+
 load_dotenv()
 
 MODEL = os.getenv("CDA_MODEL", "gpt-4o")
@@ -179,14 +181,22 @@ async def analyze(req: AnalyzeRequest):
     except json.JSONDecodeError:
         raise HTTPException(502, "결과 파싱 실패.")
 
-    # 4) 증거 검증: 인용문이 실제 원문에 존재하는 역량만 통과 (할루시네이션 차단)
-    #    통과한 증거는 verified=True 로 표기 → 프론트 Evidence Index 계산에 반영됨
-    verified = []
+    # 4) 증거 검증: evidence '전체' 문자열이 실제 원문에 존재하는 역량만 통과 (할루시네이션 차단)
+    #    이전에는 evidence[:40] in content 처럼 앞 40자만 확인했음 — AI가 40자 뒤에
+    #    원문에 없는 문장을 이어붙이거나, 서로 떨어진 문장을 합쳐도 통과하는 결함이 있었다.
+    #    verify_evidence_against_source()는 전체 문자열을 대조하고, 통과한 것만
+    #    verified=True 로 표기해 프론트 Evidence Index 계산에 반영되게 한다.
+    checked = []
     for c in result.get("competencies", []):
-        if c.get("evidence") and c["evidence"][:40] in content:
-            c["verified"] = True
-            verified.append(c)
-    result["competencies"] = verified
+        verdict = verify_evidence_against_source(c.get("evidence") or "", content)
+        if not verdict["verified"]:
+            continue
+        c["verified"] = True
+        c["sourceStart"] = verdict["sourceStart"]
+        c["sourceEnd"] = verdict["sourceEnd"]
+        checked.append(c)
+    # 5) 동일하거나 공백/개행만 다른 Evidence가 중복 반환된 경우 하나만 남긴다
+    result["competencies"] = dedupe_competencies_by_evidence(checked)
     result["source"] = src
     result["source_text"] = content          # 프론트 원문 재검증용
     result["taxonomy"] = "K-CESA"

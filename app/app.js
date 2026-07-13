@@ -183,8 +183,14 @@ function experienceFromBackend(data, meta) {
   const sourceText = data.source_text || meta.originalText || meta.description || '';
   const comps = (data.competencies || []).map(c => {
     const lvl = Math.min(4, Math.max(1, c.strengthLevel || c.strength_level || c.evidenceStrength || c.evidence_strength || 2));
-    // 백엔드가 verified 표기를 안 줬을 때도 프론트에서 원문 대조로 재검증
-    const verified = c.verified === true || (sourceText ? verifyEvidenceAgainstSource(c.evidence, sourceText) : true);
+    // 검증 책임은 백엔드(evidence_verification.verify_evidence_against_source, 전체
+    // 문자열 대조)가 진다. 프론트는 백엔드가 보낸 verified 값을 신뢰한다.
+    // 필드가 아예 없는 예외적인 경우(레거시 백엔드 응답 등)에만 프론트에서 원문과
+    // 재대조하고, 그마저 불가능하면(원문 없음) 검증되지 않은 것으로 처리한다
+    // — "c.verified === true || 항상통과" 처럼 추측으로 통과시키지 않는다.
+    const verified = typeof c.verified === 'boolean'
+      ? c.verified
+      : (sourceText ? verifyEvidenceAgainstSource(c.evidence, sourceText) : false);
     return {
       name: c.name,
       confidence: c.confidence || 3,
@@ -194,7 +200,9 @@ function experienceFromBackend(data, meta) {
       strengthLevel: lvl,
       evidenceStrength: lvl,                          // 레거시 별칭
       strengthReason: c.strength_reason || c.strengthReason || STRENGTH_LEVELS[lvl].desc,
-      verified,                                       // 백엔드 검증 + 프론트 원문 재대조
+      verified,                                       // 백엔드 검증 신뢰 (+ 필드 부재시 프론트 재대조)
+      sourceStart: (typeof c.sourceStart === 'number') ? c.sourceStart : null,
+      sourceEnd: (typeof c.sourceEnd === 'number') ? c.sourceEnd : null,
       src: c.source_ref || (meta.files && meta.files[0]) || meta.url || '증빙',
     };
   });
