@@ -101,12 +101,17 @@ const Store = {
   find(id) { return this.items.find(x => x.id === id); },
   byCategory(key) { return this.items.filter(x => x.category === key); },
   seedIfEmpty() {
-    if (this.items.length === 0 && !localStorage.getItem('cda_seeded_v3')) {
-      localStorage.setItem('cda_seeded_v3', '1');
+    if (this.items.length === 0 && !localStorage.getItem('cda_seeded_v4')) {
+      localStorage.setItem('cda_seeded_v4', '1');
       this.items = SEED.slice();
     }
   },
-  reset() { localStorage.removeItem('cda_exp'); localStorage.removeItem('cda_seeded_v3'); localStorage.removeItem('cda_seeded_v2'); },
+  reset() {
+    localStorage.removeItem('cda_exp');
+    localStorage.removeItem('cda_seeded_v4');
+    localStorage.removeItem('cda_seeded_v3');
+    localStorage.removeItem('cda_seeded_v2');
+  },
 };
 
 /* ============================================================
@@ -597,17 +602,36 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 /* ============================================================
    시드 데이터
    ============================================================ */
-/* 시드 = 현재 학생의 기능 테스트용. (다른 학생 평균/가짜 과거 데이터 아님.)
-   날짜를 과거~최근으로 분산해 증거 축적·성장·지속성·최근성이 실제로 계산되게 함. */
+/* 시드 = 학회 발표·시연용 예제 데이터. (다른 학생 평균/가짜 과거 데이터 아님 — 한 학생의
+   가상 활동 기록.) description은 실제 서술문이라 mockEvidenceSentences()가 원문 문장을
+   그대로 증거로 추출·검증한다(할루시네이션 아님). 날짜를 과거~최근으로 분산해 증거 축적·
+   성장·지속성·최근성, 그리고 "6개월 전 vs 현재" 성장 비교가 실제로 의미 있게 계산되도록 함.
+   역량 하나는 의도적으로 증거가 적게 남겨 "다음으로 채워볼 역량"·AI 코칭 기능을 보여준다. */
 const SEED = [
-  // --- 과거(6개월 전 스냅샷에 포함) ---
-  makeExperience({ source: 'link', category: 'project', title: '캡스톤 — 소상공인 예약 플랫폼', org: '컴퓨터공학과', date: '2025.03–06', url: 'https://github.com/example/capstone', description: '사용자 15명 인터뷰로 핵심 기능을 좁히고 팀을 이끌어 MVP를 완성했다.' }),
-  makeExperience({ source: 'file', category: 'cert', title: 'TOEIC 960', org: 'ETS', date: '2025.05', files: ['toeic_960.pdf'], description: '영어 의사소통 능력을 공인 점수로 입증했다.' }),
-  makeExperience({ source: 'file', category: 'volunteer', title: '지역아동센터 학습 멘토링', org: '○○구 자원봉사센터', date: '2024.09–12', files: ['봉사확인서.pdf'], description: '주 1회 아동 학습을 지도하며 눈높이 소통을 실천했다.' }),
-  // --- 최근(6개월 내 — 성장으로 나타남) ---
-  makeExperience({ source: 'file', category: 'award', title: '교내 데이터 분석 공모전 우수상', org: '산학협력단', date: '2026.05', files: ['수상확인서.pdf'], description: '공공데이터로 상권 이탈을 예측하는 모델을 설계해 우수상을 받았다.' }),
-  makeExperience({ source: 'link', category: 'club', title: '학술동아리 — 프로덕트 스터디 기획부장', org: '경영학과', date: '2026.03', url: 'https://blog.example.com/club', description: '매주 세미나를 기획·진행하고 신입 부원 온보딩을 이끌었다.' }),
-  makeExperience({ source: 'file', category: 'language', title: 'OPIc IH', org: 'ACTFL', date: '2026.06', files: ['opic_ih.pdf'], description: '영어 인터뷰 평가에서 IH 등급을 받아 실무 회화 역량을 입증했다.' }),
+  // --- 6개월 전 시점 이전 (과거 스냅샷에 포함) ---
+  makeExperience({ source: 'link', category: 'project', title: '캡스톤 디자인 — 소상공인 예약 플랫폼', org: '컴퓨터공학과', date: '2025.09', url: 'https://github.com/example/capstone',
+    description: '사용자 15명을 인터뷰하여 예약 과정의 불편함을 구체적으로 파악하고 핵심 기능 3가지로 요구사항을 좁혔다. 개발 일정이 지연되자 팀원들과 역할을 재배분하여 발표 기한 내에 MVP를 완성했다.' }),
+  makeExperience({ source: 'file', category: 'volunteer', title: '지역아동센터 학습 멘토링', org: '○○구 자원봉사센터', date: '2025.10', files: ['봉사확인서.pdf'],
+    description: '매주 토요일 초등학생 3명의 학습을 지도하며 아이마다 다른 눈높이에 맞춰 설명 방식을 바꿔가며 소통했다. 학기 말에는 학부모와 학습 진도를 공유하는 보고서를 작성해 6개월간 꾸준히 활동을 이어갔다.' }),
+  makeExperience({ source: 'file', category: 'language', title: 'TOEIC 945', org: 'ETS', date: '2025.11', files: ['toeic_945.pdf'],
+    description: '6개월간 매일 1시간씩 영어 듣기·독해를 꾸준히 학습하여 TOEIC 945점을 취득했다. 이후 교내 국제교류 프로그램에서 외국인 교환학생과 영어로 스터디를 진행하며 실제 회화에 점수를 적용했다.' }),
+  makeExperience({ source: 'file', category: 'cert', title: 'SQL 개발자(SQLD) 자격증', org: '한국데이터산업진흥원', date: '2026.01', files: ['sqld_cert.pdf'],
+    description: '데이터베이스 정규화와 SQL 실무 문법을 독학으로 학습해 SQLD 자격증을 취득했다. 학습 중 만든 실습 예제를 정리해 노션 페이지로 공유하며 스스로 학습 계획을 관리했다.' }),
+  makeExperience({ source: 'link', category: 'club', title: '학술동아리 — 데이터분석 스터디 운영진', org: '경영학과', date: '2026.02', url: 'https://blog.example.com/club',
+    description: '매주 세미나를 기획하고 발표자를 섭외해 20회 이상 정기 모임을 운영했다. 신입 부원 8명의 온보딩 자료를 만들어 스터디 적응을 도왔다.' }),
+  // --- 6개월 전 시점 이후 (현재 스냅샷에만 반영 → 성장으로 나타남) ---
+  makeExperience({ source: 'file', category: 'award', title: '교내 데이터 분석 공모전 우수상', org: '산학협력단', date: '2026.04', files: ['수상확인서.pdf'],
+    description: '공공데이터를 활용해 상권 매출 변화를 예측하는 모델을 설계하고 팀을 이끌어 우수상을 받았다. 발표 자료를 준비하며 심사위원의 예상 질문을 미리 정리해 대응했다.' }),
+  makeExperience({ source: 'link', category: 'research', title: '학부생 학술대회 논문 발표', org: 'OO대학교 산업공학회', date: '2026.05', url: 'https://example.org/paper',
+    description: '6개월간 수집한 설문 데이터를 통계적으로 분석해 논문으로 정리하고 학술대회에서 발표했다. 발표 후 받은 심사위원 피드백을 반영해 분석 방법을 한 차례 더 보완했다.' }),
+  makeExperience({ source: 'file', category: 'education', title: '데이터 분석 부트캠프 수료', org: '멋쟁이사자처럼', date: '2026.06', files: ['수료증.pdf'],
+    description: '8주간 파이썬과 SQL 실무 프로젝트를 매주 제출하며 부트캠프를 완주했다. 마지막 주에는 배운 내용을 정리해 팀원들에게 공유 세션을 진행했다.' }),
+  makeExperience({ source: 'link', category: 'project', title: '사이드 프로젝트 — 대학생 중고거래 플랫폼', org: '개인 프로젝트', date: '2026.07', url: 'https://github.com/example/secondhand',
+    description: '기존 서비스들의 리뷰를 분석해 신뢰도 문제를 핵심 개선점으로 도출하고 검증 배지 기능을 설계했다. 개발 중 발생한 의견 차이를 조율하기 위해 매주 회고 미팅을 제안해 진행했다.' }),
+  makeExperience({ source: 'file', category: 'volunteer', title: '교내 축제 운영 스태프', org: '학생회', date: '2026.08', files: ['활동확인서.pdf'],
+    description: '50명 규모의 부스 운영 인력을 배치하고 돌발 상황에서 인력을 재배치해 행사를 차질 없이 마쳤다. 행사 종료 후 설문을 취합해 다음 기수를 위한 운영 매뉴얼을 정리했다.' }),
+  makeExperience({ source: 'link', category: 'club', title: '캡스톤 후속 발표회 진행', org: '컴퓨터공학과', date: '2026.09', url: 'https://blog.example.com/showcase',
+    description: '학과 발표회에서 8개 팀의 진행을 맡아 시간 배분과 질의응답을 조율했다. 발표 자료 검수 과정에서 팀원들에게 개선점을 구체적으로 제안해 전달력을 높였다.' }),
 ];
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { const o = document.getElementById('modalOverlay'); if (o) o.classList.remove('open'); } });
