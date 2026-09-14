@@ -1,0 +1,23 @@
+# Render Blueprint — PORTRI AI 백엔드 배포 설정
+# 사용법: https://dashboard.render.com → New + → Blueprint → 이 저장소 선택
+# (자세한 단계는 backend/README.md 참조)
+services:
+  - type: web
+    name: portri-ai-backend
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false          # Render 대시보드에서 직접 입력 (여기 저장 안 됨)
+      - key: CDA_MODEL
+        value: gpt-4o-mini   # 비용 절감을 위해 무료 배포 기본값은 mini 모델 권장
+      - key: CDA_ALLOWED_ORIGINS
+        value: https://hee99999-create.github.io,http://localhost:8125
+      - key: CDA_RATE_LIMIT_PER_HOUR
+        value: "20"
+      - key: CDA_MAX_TEXT_LEN
+        value: "6000"
+    healthCheckPath: /health

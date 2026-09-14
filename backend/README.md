@@ -50,3 +50,39 @@ curl -X POST http://localhost:8000/analyze -H "Content-Type: application/json" ^
 - 모델 기본값은 `gpt-4o`. 비용을 줄이려면 `.env`의 `CDA_MODEL=gpt-4o-mini`로 변경.
 - 성적증명서/자격증 **이미지·PDF 인식**은 이 스캐폴드에 아직 없습니다(텍스트/링크만).
   추가하려면 OpenAI에 이미지(vision) 입력을 붙이면 됩니다 — 다음 단계.
+
+## 공개(https) 배포 — 배포 사이트(github.io)에서 실제 AI 쓰기
+
+배포된 https 사이트는 http://localhost 백엔드를 부를 수 없습니다(mixed content 차단).
+배포 사이트에서도 실제 AI를 쓰려면 백엔드를 **공개 https 주소**로 올려야 합니다.
+
+### ⚠️ 배포 전 반드시 할 것 — 비용 방어
+
+백엔드 주소가 공개되면 **그 주소를 아는 누구나 요청을 보내 내 OpenAI 크레딧을 소모**할 수 있습니다.
+이 코드에는 최소한의 방어 장치가 들어 있지만, **가장 확실한 방어는 OpenAI 대시보드의 지출 상한**입니다.
+
+1. https://platform.openai.com/settings/organization/limits 접속
+2. **월 지출 한도(Usage limit)**를 감당 가능한 금액(예: $5)으로 설정
+3. 코드 방어 장치(이미 적용됨, `main.py`):
+   - `CDA_RATE_LIMIT_PER_HOUR` — IP당 시간당 분석 요청 수 제한 (기본 20회)
+   - `CDA_MAX_TEXT_LEN` — 요청 텍스트 최대 길이 제한 (기본 6000자)
+   - 초과 시 각각 `429`(요청 과다), `422`(입력 초과) 응답
+
+### Render(무료)에 배포하는 단계
+
+1. https://render.com 가입 (GitHub 계정으로 로그인 가능)
+2. 대시보드에서 **New +** → **Blueprint** 선택
+3. `hee99999-create/portfolio` 저장소 연결 → 저장소 루트의 `render.yaml`을 자동 인식함
+4. `OPENAI_API_KEY` 환경변수만 직접 입력 (Render 대시보드 → Environment 탭)
+   - 다른 값(`CDA_MODEL`, `CDA_ALLOWED_ORIGINS`, `CDA_RATE_LIMIT_PER_HOUR` 등)은 `render.yaml`에 이미 설정됨
+5. **Deploy** 클릭 → 몇 분 후 `https://portri-ai-backend.onrender.com` 같은 주소가 생김
+6. 브라우저에서 `https://그주소/health` 열어서 `{"status":"ok",...}` 확인
+7. 배포된 프론트 사이트(github.io)에서 그 주소를 쓰도록 지정:
+   - 사이트 접속 후 F12(개발자 도구) → Console 탭에 아래 입력:
+     ```js
+     localStorage.setItem('cda_api', 'https://portri-ai-backend.onrender.com')
+     ```
+   - 새로고침하면 우측 상단에 "🟢 AI 연결됨"이 떠야 함
+
+> **무료 플랜 주의**: Render 무료 웹서비스는 15분간 요청이 없으면 잠들고,
+> 다음 요청 시 깨어나는 데 30초~1분 정도 걸립니다(첫 분석이 느릴 수 있음 — 정상 동작).

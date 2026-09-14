@@ -14,13 +14,16 @@ PORTRI AI — 백엔드 (증거 기반 역량 추출, OpenAI)
 """
 import json
 import os
+import threading
+import time
+from collections import defaultdict, deque
 from typing import Optional
 
 import httpx
 import openai
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
 from pydantic import BaseModel, Field
@@ -33,6 +36,46 @@ MODEL = os.getenv("CDA_MODEL", "gpt-4o")
 ORIGINS = [o.strip() for o in os.getenv("CDA_ALLOWED_ORIGINS", "*").split(",")]
 
 client = OpenAI()  # OPENAI_API_KEY 를 환경에서 읽음
+
+# ============================================================
+# 비용 방어: 사용량 제한 (Rate Limit) + 입력 길이 제한
+# 백엔드가 공개 주소를 가지면 누구나 호출해 OpenAI 크레딧을 소모할 수 있다.
+# 이 두 가지는 최소한의 방어선이며, 실제 지출 상한은 OpenAI 대시보드에서
+# 별도로 설정해야 한다(코드로는 막을 수 없음).
+# ============================================================
+RATE_LIMIT_PER_HOUR = int(os.getenv("CDA_RATE_LIMIT_PER_HOUR", "20"))  # 0 이하 = 제한 없음(로컬 개발용)
+RATE_LIMIT_WINDOW_SEC = 3600
+MAX_TEXT_LEN = int(os.getenv("CDA_MAX_TEXT_LEN", "6000"))
+
+_rate_lock = threading.Lock()
+_request_log: dict = defaultdict(deque)  # {ip: deque[timestamp, ...]}
+
+
+def _client_ip(request: Request) -> str:
+    """Render 등 프록시 뒤에서는 X-Forwarded-For 의 첫 값이 실제 클라이언트 IP."""
+    fwd = request.headers.get("x-forwarded-for")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def check_rate_limit(request: Request):
+    """IP당 시간당 요청 수를 제한한다. 초과 시 429를 던진다."""
+    if RATE_LIMIT_PER_HOUR <= 0:
+        return
+    ip = _client_ip(request)
+    now = time.time()
+    with _rate_lock:
+        q = _request_log[ip]
+        while q and now - q[0] > RATE_LIMIT_WINDOW_SEC:
+            q.popleft()
+        if len(q) >= RATE_LIMIT_PER_HOUR:
+            raise HTTPException(
+                429,
+                f"요청이 너무 많습니다. 이 서버는 시간당 최대 {RATE_LIMIT_PER_HOUR}회까지 분석할 수 있습니다. "
+                f"잠시 후 다시 시도해주세요.",
+            )
+        q.append(now)
 
 app = FastAPI(title="PORTRI AI — Competency Extraction API (OpenAI)")
 app.add_middleware(
@@ -105,10 +148,10 @@ EXTRACT_FUNCTION = {
 
 
 class AnalyzeRequest(BaseModel):
-    source_url: Optional[str] = Field(None, description="분석할 링크")
-    text: Optional[str] = Field(None, description="링크 대신 직접 붙여넣은 텍스트/증빙 내용")
-    title: Optional[str] = None
-    category: Optional[str] = None
+    source_url: Optional[str] = Field(None, max_length=2000, description="분석할 링크")
+    text: Optional[str] = Field(None, max_length=MAX_TEXT_LEN, description="링크 대신 직접 붙여넣은 텍스트/증빙 내용")
+    title: Optional[str] = Field(None, max_length=200)
+    category: Optional[str] = Field(None, max_length=50)
 
 
 @app.get("/health")
@@ -133,7 +176,8 @@ async def fetch_url(url: str) -> str:
 
 
 @app.post("/analyze")
-async def analyze(req: AnalyzeRequest):
+async def analyze(req: AnalyzeRequest, request: Request):
+    check_rate_limit(request)
     # 1) 원본 콘텐츠 확보
     if req.text:
         content = req.text
@@ -244,11 +288,14 @@ ADVISE_FUNCTION = {
 
 
 @app.post("/advise")
-def advise(req: AdviseRequest):
+def advise(req: AdviseRequest, request: Request):
+    check_rate_limit(request)
     profile = json.dumps(
         {"competencies": req.competencies, "categories": req.categories, "experiences": req.experiences},
         ensure_ascii=False,
     )
+    if len(profile) > MAX_TEXT_LEN * 2:
+        raise HTTPException(400, "프로필 데이터가 너무 큽니다.")
     try:
         resp = client.chat.completions.create(
             model=MODEL,
