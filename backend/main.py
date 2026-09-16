@@ -61,6 +61,17 @@ def _client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
+def _log_openai_error(tag: str, e: Exception):
+    """OpenAI 호출 실패의 실제 원인을 서버 로그(Render Logs 등)에 남긴다.
+    클라이언트에는 str(e)만 짧게 보여주지만, 진단하려면 예외 타입과 원인
+    체인(__cause__)이 필요하다 — 502만 봐서는 네트워크/인증/타임아웃 중
+    무엇인지 알 수 없다."""
+    print(f"[{tag}] OpenAI 호출 실패: {type(e).__name__}: {e!r}")
+    cause = getattr(e, "__cause__", None)
+    if cause is not None:
+        print(f"[{tag}]   원인(cause): {type(cause).__name__}: {cause!r}")
+
+
 def check_rate_limit(request: Request):
     """IP당 시간당 요청 수를 제한한다. 초과 시 429를 던진다."""
     if RATE_LIMIT_PER_HOUR <= 0:
@@ -220,6 +231,7 @@ async def analyze(req: AnalyzeRequest, request: Request):
             tool_choice={"type": "function", "function": {"name": "record_competencies"}},
         )
     except openai.OpenAIError as e:
+        _log_openai_error("analyze", e)
         raise HTTPException(502, f"AI 분석 실패: {e}")
 
     # 3) function call 결과 파싱
@@ -323,6 +335,7 @@ def advise(req: AdviseRequest, request: Request):
             tool_choice={"type": "function", "function": {"name": "career_advice"}},
         )
     except openai.OpenAIError as e:
+        _log_openai_error("advise", e)
         raise HTTPException(502, f"AI 조언 실패: {e}")
     msg = resp.choices[0].message
     if not msg.tool_calls:
@@ -406,6 +419,7 @@ async def parse_transcript(req: ParseTranscriptRequest, request: Request):
             tool_choice={"type": "function", "function": {"name": "record_courses"}},
         )
     except openai.OpenAIError as e:
+        _log_openai_error("parse-transcript", e)
         raise HTTPException(502, f"성적증명서 분석 실패: {e}")
 
     msg = resp.choices[0].message
