@@ -32,10 +32,16 @@ from evidence_verification import verify_evidence_against_source, dedupe_compete
 
 load_dotenv()
 
-MODEL = os.getenv("CDA_MODEL", "gpt-4o")
+MODEL = os.getenv("CDA_MODEL", "gpt-4o").strip()
 ORIGINS = [o.strip() for o in os.getenv("CDA_ALLOWED_ORIGINS", "*").split(",")]
 
-client = OpenAI()  # OPENAI_API_KEY 를 환경에서 읽음
+# 환경변수 값에 실수로 섞여 들어간 개행/공백을 방어적으로 제거한다.
+# (실제로 겪은 장애: Render 대시보드에 키를 붙여넣을 때 끝에 개행(\n)이 함께
+# 들어가면, Authorization 헤더 값에 개행이 섞여 httpx가 "Illegal header value"
+# 로 모든 요청을 거부한다 — 겉으로는 502 "Connection error."로만 보여서
+# 원인 파악이 어려웠다. 여기서 한 번 정리해두면 이런 실수가 재발해도 안전하다.)
+_openai_key = (os.getenv("OPENAI_API_KEY") or "").strip()
+client = OpenAI(api_key=_openai_key) if _openai_key else OpenAI()  # 값이 없으면 SDK 기본 동작 유지
 
 # ============================================================
 # 비용 방어: 사용량 제한 (Rate Limit) + 입력 길이 제한
