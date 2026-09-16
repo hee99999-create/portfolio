@@ -46,6 +46,8 @@ client = OpenAI()  # OPENAI_API_KEY 를 환경에서 읽음
 RATE_LIMIT_PER_HOUR = int(os.getenv("CDA_RATE_LIMIT_PER_HOUR", "20"))  # 0 이하 = 제한 없음(로컬 개발용)
 RATE_LIMIT_WINDOW_SEC = 3600
 MAX_TEXT_LEN = int(os.getenv("CDA_MAX_TEXT_LEN", "6000"))
+# 성적증명서는 경험 서술문보다 훨씬 길 수 있다(여러 학기·페이지) — 별도 상수로 분리.
+MAX_TRANSCRIPT_LEN = int(os.getenv("CDA_MAX_TRANSCRIPT_LEN", "20000"))
 
 _rate_lock = threading.Lock()
 _request_log: dict = defaultdict(deque)  # {ip: deque[timestamp, ...]}
@@ -336,12 +338,17 @@ def advise(req: AdviseRequest, request: Request):
 # "원문 텍스트 → 과목 목록"만 담당한다(책임 분리).
 # ============================================================
 class ParseTranscriptRequest(BaseModel):
-    text: str = Field(..., min_length=1, max_length=MAX_TEXT_LEN, description="PDF에서 추출한 성적증명서 원문 텍스트")
+    text: str = Field(..., min_length=1, max_length=MAX_TRANSCRIPT_LEN, description="PDF에서 추출한 성적증명서 원문 텍스트")
 
 
 PARSE_TRANSCRIPT_SYSTEM_PROMPT = (
     "당신은 한국 대학 성적증명서 원문에서 수강 과목 정보를 정확히 추출하는 도우미입니다. "
-    "원문에 실제로 등장하는 과목만 포함하고, 표에 없는 과목을 지어내지 마세요. "
+    "이 문서는 성적증명서가 아닐 수도 있습니다(예: 출장보고서, 활동보고서 등). "
+    "과목명·이수구분·학점·성적이 함께 표기된 표나 목록이 원문에 실제로 존재할 때만 과목으로 기록하세요. "
+    "그런 표나 목록을 전혀 찾을 수 없으면 courses를 빈 배열로 반환하세요 — 절대 지어내지 마세요. "
+    "'프로젝트', '보고서', '활동' 같은 단어가 보인다고 해서 그것을 과목으로 만들지 마세요. "
+    "각 과목에는 반드시 evidence(그 과목의 학점·성적이 표기된 원문 부분을 그대로, 요약·수정 없이 인용)를 "
+    "포함하세요 — 원문에 실제로 존재하는 문자열이어야 합니다(검증합니다). "
     "이수구분은 반드시 다음 중 하나로 매핑하세요: " + ", ".join(DIVISIONS) + " "
     "(원문에 '전공기초', '핵심교양', '자유선택' 등 다른 명칭이 있으면 의미가 가장 가까운 항목으로 매핑하세요). "
     "성적은 반드시 다음 중 하나로 표기하세요: " + ", ".join(GRADES) + " "
@@ -353,7 +360,7 @@ PARSE_TRANSCRIPT_FUNCTION = {
     "type": "function",
     "function": {
         "name": "record_courses",
-        "description": "성적증명서 원문에서 수강 과목 목록을 기록한다.",
+        "description": "성적증명서 원문에서 수강 과목 목록을 기록한다. 과목표를 찾을 수 없으면 빈 배열을 반환한다.",
         "parameters": {
             "type": "object",
             "additionalProperties": False,
@@ -368,8 +375,9 @@ PARSE_TRANSCRIPT_FUNCTION = {
                             "division": {"type": "string", "enum": DIVISIONS},
                             "credit": {"type": "integer", "minimum": 1, "maximum": 6},
                             "grade": {"type": "string", "enum": GRADES},
+                            "evidence": {"type": "string", "description": "이 과목의 학점·성적이 표기된 원문 부분을 그대로 인용 (예: '자료구조 전공필수 3 A+')"},
                         },
-                        "required": ["name", "division", "credit", "grade"],
+                        "required": ["name", "division", "credit", "grade", "evidence"],
                     },
                 },
             },
@@ -408,10 +416,17 @@ async def parse_transcript(req: ParseTranscriptRequest, request: Request):
     except json.JSONDecodeError:
         raise HTTPException(502, "결과 파싱 실패.")
 
-    # 방어: 모델이 스키마를 벗어난 값을 넣는 극단적 경우를 대비해 한 번 더 검증
+    # 검증: evidence(그 과목 행을 그대로 인용한 원문)가 실제 원문에 존재하는 과목만 통과시킨다.
+    # /analyze와 동일한 원칙 — 성적증명서가 아닌 문서를 넣었을 때 AI가 그럴듯한 과목을
+    # 지어내는 것(예: 출장보고서의 '프로젝트'를 '전공선택 3학점 A0' 과목으로 둔갑시키는 것)을
+    # 차단한다. enum을 벗어난 값도 함께 걸러낸다.
     valid_divisions, valid_grades = set(DIVISIONS), set(GRADES)
-    courses = [
-        c for c in result.get("courses", [])
-        if c.get("name") and c.get("division") in valid_divisions and c.get("grade") in valid_grades
-    ]
+    courses = []
+    for c in result.get("courses", []):
+        if not (c.get("name") and c.get("division") in valid_divisions and c.get("grade") in valid_grades):
+            continue
+        verdict = verify_evidence_against_source(c.get("evidence") or "", content)
+        if not verdict["verified"]:
+            continue
+        courses.append({"name": c["name"], "division": c["division"], "credit": c.get("credit"), "grade": c["grade"]})
     return {"courses": courses}

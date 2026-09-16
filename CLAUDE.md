@@ -57,7 +57,12 @@
 **백엔드 공개 배포 준비 (2026-09):**
 - 실제 AI를 배포 사이트(github.io, https)에서도 쓰려면 백엔드를 공개 https 주소로 올려야 함(mixed content 제약). `render.yaml`(Render Blueprint) + `backend/README.md`의 "공개 배포" 절 참조.
 - **비용 방어 필수**: 백엔드 주소가 공개되면 누구나 호출해 OpenAI 크레딧을 소모할 수 있다. `main.py`에 `check_rate_limit()`(IP당 시간당 `CDA_RATE_LIMIT_PER_HOUR`회, 기본 20) + `AnalyzeRequest` 필드별 `max_length`(`CDA_MAX_TEXT_LEN`, 기본 6000자)를 넣었다. 이건 최소 방어선이며, **실제 상한은 OpenAI 대시보드 지출 한도**로 걸어야 한다(코드로는 막을 수 없음).
-- 배포 후 프론트가 그 주소를 쓰게 하려면 `localStorage.setItem('cda_api','https://배포주소')` (배포 URL이 하드코딩되어 있지 않음 — 매번 바뀔 수 있어 의도적으로 런타임 설정으로 둠).
+- 배포 후 프론트가 그 주소를 쓰게 하려면 `localStorage.setItem('cda_api','https://배포주소')` (배포 URL이 하드코딩되어 있지 않음 — 매번 바뀔 수 있어 의도적으로 런타임 설정으로 둠). 실제로는 `app.js`의 `DEFAULT_API_BASE`가 `location.hostname === 'hee99999-create.github.io'`일 때 자동으로 배포 백엔드를 기본값으로 쓰도록 해 둬서, 방문자가 이 설정을 직접 할 필요는 없음.
+
+**교과관리(성적증명서) PDF 인식 — 원문 검증 필수 (2026-09, 중요 교훈):**
+- `curricular.html`이 `pdf.js`로 PDF에서 텍스트를 추출해 `POST /parse-transcript`로 보내면, AI가 과목명/이수구분/학점/성적을 구조화해 돌려준다.
+- **반드시 `/analyze`와 동일하게 `verify_evidence_against_source()`로 원문 대조 검증해야 한다.** 처음 구현 시 이 검증을 빠뜨렸다가, 성적증명서가 아닌 문서(예: 출장보고서)를 넣었을 때 AI가 "창의충전소 프로젝트 / 전공선택 / 3학점 / A0" 같은 **완전히 지어낸 과목**을 반환하는 것을 실사용 테스트에서 발견했다. 각 과목에 `evidence`(그 과목 행을 원문 그대로 인용한 문자열) 필드를 추가로 요구하고, 그 evidence가 실제 원문에 존재할 때만 과목을 통과시키도록 고쳤다. 새 AI 추출 엔드포인트를 추가할 때는 항상 "원문에 없으면 지어낼 수 있다"고 가정하고 검증부터 설계할 것.
+- 텍스트 길이 제한은 `/analyze`(경험 서술문, `CDA_MAX_TEXT_LEN` 기본 6000자)와 `/parse-transcript`(성적증명서, `CDA_MAX_TRANSCRIPT_LEN` 기본 20000자)를 분리했다 — 성적증명서는 여러 페이지라 훨씬 길 수 있다. 실패 시(422/429/네트워크 오류/빈 결과) 프론트가 원인을 구분해 정확히 안내하고, 어떤 경우에도 가짜 데이터로 조용히 대체하지 않는다.
 
 **금지 표현**: 나의 역량 점수 · K-CESA 점수 · 학과평균 · 동일학년 평균 · 다른 학생과의 비교 · 부족한 역량.
 **대체 표현(수준)**: 아직 발견되지 않음 · 증거 필요 · 성장 중 · 강함 · 매우 강함.

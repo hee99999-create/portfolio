@@ -20,4 +20,6 @@ services:
         value: "20"
       - key: CDA_MAX_TEXT_LEN
         value: "6000"
+      - key: CDA_MAX_TRANSCRIPT_LEN
+        value: "20000"
     healthCheckPath: /health

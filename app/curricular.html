@@ -191,24 +191,33 @@ async function analyze() {
     btn.disabled = true; const orig = btn.textContent; btn.textContent = 'AI가 과목을 찾는 중…';
     hint.textContent = '';
     const health = await checkBackend();
-    let courses = null;
+    let courses = null, failReason = null;
     if (health) {
       try {
         const r = await fetch(API_BASE + '/parse-transcript', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text: extractedTranscriptText }),
         });
-        if (r.ok) {
+        if (r.status === 422) {
+          failReason = `PDF에서 읽은 텍스트가 너무 길어요(${extractedTranscriptText.length.toLocaleString()}자). 일부 페이지만 있는 파일로 다시 시도하거나 성적을 직접 입력해주세요.`;
+        } else if (r.status === 429) {
+          failReason = '지금 요청이 많아 잠시 처리할 수 없어요. 잠시 후 다시 시도해주세요.';
+        } else if (r.ok) {
           const data = await r.json();
           if (data.courses && data.courses.length) courses = data.courses;
+          else failReason = 'AI가 이 파일에서 과목표를 찾지 못했어요. 성적증명서 PDF가 맞는지 확인하시거나, 성적을 직접 입력해주세요.';
+        } else {
+          failReason = '분석 중 오류가 발생했어요. 잠시 후 다시 시도하거나 성적을 직접 입력해주세요.';
         }
-      } catch (e) { /* 아래 폴백 안내로 처리 */ }
+      } catch (e) {
+        failReason = '분석 중 오류가 발생했어요. 잠시 후 다시 시도하거나 성적을 직접 입력해주세요.';
+      }
+    } else {
+      failReason = 'AI 서버가 꺼져 있어 파일을 분석할 수 없어요. 성적을 직접 입력하시거나, "예시로 기능 체험하기"를 눌러보세요.';
     }
     btn.disabled = false; btn.textContent = orig;
     if (!courses || !courses.length) {
-      hint.textContent = health
-        ? 'AI가 이 파일에서 과목을 찾지 못했어요. 성적을 직접 입력해주세요.'
-        : 'AI 서버가 꺼져 있어 파일을 분석할 수 없어요. 성적을 직접 입력하시거나, "예시로 기능 체험하기"를 눌러보세요.';
+      hint.textContent = failReason || 'AI가 이 파일에서 과목을 찾지 못했어요. 성적을 직접 입력해주세요.';
       return;
     }
     const scores = analyzeTranscript(courses);
