@@ -450,3 +450,34 @@ async def parse_transcript(req: ParseTranscriptRequest, request: Request):
             continue
         courses.append({"name": c["name"], "division": c["division"], "credit": c.get("credit"), "grade": c["grade"]})
     return {"courses": courses}
+
+
+# ============================================================
+# 네이버 로그인 — 프로필 조회 프록시
+# 프론트(login.html)는 네이버 OAuth(암묵적 흐름)로 access_token만 브라우저에서
+# 직접 받는다(클라이언트 시크릿 불필요). 다만 브라우저에서 네이버 프로필 API를
+# 직접 호출하면 CORS로 차단되므로, 이 서버가 대신 호출해 그대로 중계한다.
+# 시크릿을 저장하거나 사용하지 않으며, 전달받은 토큰만 그대로 넘긴다.
+# ============================================================
+class NaverProfileRequest(BaseModel):
+    access_token: str = Field(..., min_length=1, max_length=2000)
+
+
+@app.post("/oauth/naver-profile")
+async def naver_profile(req: NaverProfileRequest, request: Request):
+    check_rate_limit(request)
+    try:
+        async with httpx.AsyncClient(timeout=10) as h:
+            r = await h.get(
+                "https://openapi.naver.com/v1/nid/me",
+                headers={"Authorization": f"Bearer {req.access_token}"},
+            )
+    except httpx.HTTPError as e:
+        raise HTTPException(502, f"네이버 프로필 조회 실패: {e}")
+    if r.status_code != 200:
+        raise HTTPException(502, f"네이버 프로필 조회 실패 (status {r.status_code})")
+    try:
+        data = r.json()
+    except ValueError:
+        raise HTTPException(502, "네이버 응답 파싱 실패.")
+    return data

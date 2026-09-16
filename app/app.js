@@ -90,7 +90,15 @@ const MOCK_STRENGTH_BY_CATEGORY = {
 const Session = {
   get loggedIn() { return localStorage.getItem('cda_user') !== null; },
   get user() { try { return JSON.parse(localStorage.getItem('cda_user')); } catch { return null; } },
-  login(email) { localStorage.setItem('cda_user', JSON.stringify({ email, name: email.split('@')[0] })); },
+  /* email 로그인은 기존과 동일하게 login(email)만 호출하면 됨(하위호환).
+     소셜 로그인은 실제 이름/제공자까지 함께 저장한다. */
+  login(email, name, provider) {
+    localStorage.setItem('cda_user', JSON.stringify({
+      email: email || '',
+      name: name || (email ? email.split('@')[0] : '사용자'),
+      provider: provider || 'email',
+    }));
+  },
   logout() { localStorage.removeItem('cda_user'); },
 };
 

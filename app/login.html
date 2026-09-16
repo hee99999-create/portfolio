@@ -29,6 +29,8 @@
 .auth-form { display:flex; align-items:center; justify-content:center; padding:clamp(28px,5vw,56px); background:var(--surface-white); }
 .auth-card { width:100%; max-width:400px; }
 .social-btn { flex:1; justify-content:center; cursor:not-allowed; }
+.social-btn:not(:disabled) { cursor:pointer; }
+.social-btn:not(:disabled):hover { background:var(--accent-tint); border-color:transparent; }
 
 @media(max-width:820px){
   .auth { grid-template-columns:1fr; }
@@ -84,12 +86,13 @@
       </form>
 
       <div class="mt-4 center">
-        <span class="caption">소셜 로그인 (준비 중)</span>
+        <span class="caption" id="socialLabel">소셜 로그인 (준비 중)</span>
         <div class="btn-row mt-2">
-          <button class="chip social-btn" disabled>카카오</button>
-          <button class="chip social-btn" disabled>네이버</button>
-          <button class="chip social-btn" disabled>Google</button>
+          <button class="chip social-btn" id="btnKakao" disabled title="관리자가 아직 설정하지 않았습니다" onclick="loginWithKakao()">카카오</button>
+          <button class="chip social-btn" id="btnNaver" disabled title="관리자가 아직 설정하지 않았습니다" onclick="loginWithNaver()">네이버</button>
+          <button class="chip social-btn" id="btnGoogle" disabled title="관리자가 아직 설정하지 않았습니다" onclick="loginWithGoogle()">Google</button>
         </div>
+        <p class="fine mt-2 hidden" id="socialErr" style="color:#c0392b"></p>
       </div>
 
       <p class="center mt-4 caption">
@@ -101,8 +104,148 @@
 </section>
 
 <script src="app.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" integrity="sha384-DKYJZ8NLiK8MN4/C5P2dtSmLQ4KwPaoqAfyA/DfmEc1VDxu4yyC7wy6K1Hs90nka" crossorigin="anonymous"></script>
 <script>
 mountNav('login');
+
+/* ============================================================
+   소셜 로그인 설정 — 각 플랫폼 개발자 콘솔에서 발급받은 값을 넣으세요.
+   비워두면 해당 버튼은 자동으로 비활성 상태("준비 중")로 남습니다.
+   - Google:  https://console.cloud.google.com/apis/credentials
+              → "OAuth 클라이언트 ID" 만들기 → 애플리케이션 유형: 웹 애플리케이션
+              → 승인된 자바스크립트 원본에 아래 두 개를 추가:
+                http://localhost:8125
+                https://hee99999-create.github.io
+              → 생성된 "클라이언트 ID"를 아래 google.clientId에 붙여넣기
+   - 카카오:   https://developers.kakao.com → 내 애플리케이션 → 앱 만들기
+              → 플랫폼 → Web 플랫폼 등록(위 두 주소)
+              → 카카오 로그인 활성화, 동의항목에서 닉네임/이메일 설정
+              → "요약 정보"의 "JavaScript 키"를 아래 kakao.jsKey에 붙여넣기
+   - 네이버:   https://developers.naver.com/apps → 애플리케이션 등록
+              → 사용 API: "네이버 로그인" 추가
+              → 서비스 URL / Callback URL에 이 로그인 페이지 주소를 각각 등록
+                (예: https://hee99999-create.github.io/portfolio/app/login.html)
+              → 발급된 "Client ID"를 아래 naver.clientId에 붙여넣기
+   ============================================================ */
+const SOCIAL_CONFIG = {
+  google: { clientId: '' },
+  kakao:  { jsKey: '' },
+  naver:  { clientId: '' },
+};
+
+(function initSocialButtons() {
+  const anyConfigured = !!(SOCIAL_CONFIG.google.clientId || SOCIAL_CONFIG.kakao.jsKey || SOCIAL_CONFIG.naver.clientId);
+  document.getElementById('socialLabel').textContent = anyConfigured ? '소셜 로그인' : '소셜 로그인 (준비 중)';
+
+  if (SOCIAL_CONFIG.google.clientId) {
+    const btn = document.getElementById('btnGoogle');
+    btn.disabled = false; btn.removeAttribute('title');
+  }
+  if (SOCIAL_CONFIG.kakao.jsKey) {
+    const btn = document.getElementById('btnKakao');
+    btn.disabled = false; btn.removeAttribute('title');
+    if (window.Kakao && !Kakao.isInitialized()) Kakao.init(SOCIAL_CONFIG.kakao.jsKey);
+  }
+  if (SOCIAL_CONFIG.naver.clientId) {
+    const btn = document.getElementById('btnNaver');
+    btn.disabled = false; btn.removeAttribute('title');
+  }
+})();
+
+function showSocialError(msg) {
+  const el = document.getElementById('socialErr');
+  el.textContent = msg; el.classList.remove('hidden');
+}
+
+/* ---- Google: Identity Services 토큰 클라이언트(암묵적 흐름) — 백엔드/시크릿 불필요 ---- */
+function loginWithGoogle() {
+  if (!window.google || !SOCIAL_CONFIG.google.clientId) return;
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: SOCIAL_CONFIG.google.clientId,
+    scope: 'openid email profile',
+    callback: async (resp) => {
+      if (!resp || !resp.access_token) { showSocialError('Google 로그인이 취소되었거나 실패했어요.'); return; }
+      try {
+        const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: 'Bearer ' + resp.access_token },
+        });
+        if (!r.ok) throw new Error('프로필 조회 실패');
+        const profile = await r.json();
+        Session.login(profile.email || '', profile.name || '', 'google');
+        location.href = next;
+      } catch (e) {
+        showSocialError('Google 프로필을 가져오지 못했어요. 다시 시도해주세요.');
+      }
+    },
+  });
+  client.requestAccessToken();
+}
+
+/* ---- 카카오: JS SDK 팝업 로그인 — 백엔드/시크릿 불필요 ---- */
+function loginWithKakao() {
+  if (!window.Kakao || !SOCIAL_CONFIG.kakao.jsKey) return;
+  Kakao.Auth.login({
+    scope: 'profile_nickname,account_email',
+    success: () => {
+      Kakao.API.request({
+        url: '/v2/user/me',
+        success: (res) => {
+          const email = res.kakao_account && res.kakao_account.email || '';
+          const name = (res.kakao_account && res.kakao_account.profile && res.kakao_account.profile.nickname)
+            || (res.properties && res.properties.nickname) || '카카오 사용자';
+          Session.login(email, name, 'kakao');
+          location.href = next;
+        },
+        fail: () => showSocialError('카카오 프로필을 가져오지 못했어요. 다시 시도해주세요.'),
+      });
+    },
+    fail: () => showSocialError('카카오 로그인이 취소되었거나 실패했어요.'),
+  });
+}
+
+/* ---- 네이버: 전체 페이지 리다이렉트(암묵적 흐름) — 이 페이지가 콜백 역할도 겸함 ----
+   프로필 조회는 브라우저에서 네이버 API를 직접 호출하면 CORS로 막히므로,
+   백엔드의 /oauth/naver-profile 프록시(토큰만 전달, 시크릿 불필요)를 거친다. */
+function loginWithNaver() {
+  if (!SOCIAL_CONFIG.naver.clientId) return;
+  const state = Math.random().toString(36).slice(2);
+  sessionStorage.setItem('cda_naver_state', state);
+  const redirectUri = location.origin + location.pathname; // 이 로그인 페이지 자체
+  const url = 'https://nid.naver.com/oauth2.0/authorize'
+    + '?response_type=token'
+    + '&client_id=' + encodeURIComponent(SOCIAL_CONFIG.naver.clientId)
+    + '&redirect_uri=' + encodeURIComponent(redirectUri)
+    + '&state=' + encodeURIComponent(state);
+  location.href = url;
+}
+
+/* 네이버 리다이렉트로 돌아온 경우 처리 (URL 해시에 access_token 포함) */
+(async function handleNaverCallback() {
+  if (!location.hash.includes('access_token=')) return;
+  const params = new URLSearchParams(location.hash.slice(1));
+  const token = params.get('access_token');
+  const state = params.get('state');
+  history.replaceState(null, '', location.pathname + location.search); // 해시 정리(토큰 URL에 남기지 않기)
+  if (!token || state !== sessionStorage.getItem('cda_naver_state')) {
+    showSocialError('네이버 로그인 검증에 실패했어요. 다시 시도해주세요.');
+    return;
+  }
+  sessionStorage.removeItem('cda_naver_state');
+  try {
+    const r = await fetch(API_BASE + '/oauth/naver-profile', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ access_token: token }),
+    });
+    if (!r.ok) throw new Error('프로필 조회 실패');
+    const data = await r.json();
+    const p = data.response || {};
+    Session.login(p.email || '', p.name || p.nickname || '네이버 사용자', 'naver');
+    location.href = next;
+  } catch (e) {
+    showSocialError('네이버 로그인에 실패했어요. 잠시 후 다시 시도해주세요.');
+  }
+})();
 let signup = false;
 const params = new URLSearchParams(location.search);
 const next = params.get('next') || 'dashboard.html';
