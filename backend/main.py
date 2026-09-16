@@ -88,6 +88,10 @@ app.add_middleware(
 # ---- K-CESA 6대 핵심역량 ----
 KCESA = ["자기관리", "대인관계", "자원·정보·기술활용", "글로벌", "의사소통", "종합적사고력"]
 
+# ---- 교과관리(성적증명서) 파싱용 어휘 — app.js/curricular.html과 동일하게 유지 ----
+DIVISIONS = ["전공필수", "전공선택", "교양", "일반선택"]
+GRADES = ["A+", "A0", "B+", "B0", "C+", "C0", "D+", "D0", "F"]
+
 SYSTEM_PROMPT = (
     "당신은 학생의 경험에서 '검증 가능한 역량 증거'를 발견하는 코치입니다. "
     "학생의 역량 자체를 평가하지 않습니다. 오직 원본 텍스트에 실제로 존재하는 "
@@ -322,3 +326,92 @@ def advise(req: AdviseRequest, request: Request):
     if not msg.tool_calls:
         raise HTTPException(502, "결과를 받지 못했습니다.")
     return json.loads(msg.tool_calls[0].function.arguments)
+
+
+# ============================================================
+# 교과관리 — 성적증명서 원문에서 수강 과목 추출
+# 프론트(curricular.html)가 pdf.js로 PDF에서 뽑아낸 원문 텍스트를 보내면,
+# 여기서 과목명/이수구분/학점/성적을 구조화해 돌려준다. 실제 K-CESA 점수
+# 계산(analyzeTranscript)은 여전히 프론트에서 하고, 이 엔드포인트는
+# "원문 텍스트 → 과목 목록"만 담당한다(책임 분리).
+# ============================================================
+class ParseTranscriptRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=MAX_TEXT_LEN, description="PDF에서 추출한 성적증명서 원문 텍스트")
+
+
+PARSE_TRANSCRIPT_SYSTEM_PROMPT = (
+    "당신은 한국 대학 성적증명서 원문에서 수강 과목 정보를 정확히 추출하는 도우미입니다. "
+    "원문에 실제로 등장하는 과목만 포함하고, 표에 없는 과목을 지어내지 마세요. "
+    "이수구분은 반드시 다음 중 하나로 매핑하세요: " + ", ".join(DIVISIONS) + " "
+    "(원문에 '전공기초', '핵심교양', '자유선택' 등 다른 명칭이 있으면 의미가 가장 가까운 항목으로 매핑하세요). "
+    "성적은 반드시 다음 중 하나로 표기하세요: " + ", ".join(GRADES) + " "
+    "(원문이 'A', '4.5', 'P/NP' 등 다른 표기여도 가장 가까운 항목으로 변환하세요. 판단할 수 없으면 그 과목은 제외하세요). "
+    "학점(credit)은 원문에 명시된 정수 값을 그대로 사용하세요."
+)
+
+PARSE_TRANSCRIPT_FUNCTION = {
+    "type": "function",
+    "function": {
+        "name": "record_courses",
+        "description": "성적증명서 원문에서 수강 과목 목록을 기록한다.",
+        "parameters": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "courses": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "name": {"type": "string", "description": "과목명 (원문 표기 그대로)"},
+                            "division": {"type": "string", "enum": DIVISIONS},
+                            "credit": {"type": "integer", "minimum": 1, "maximum": 6},
+                            "grade": {"type": "string", "enum": GRADES},
+                        },
+                        "required": ["name", "division", "credit", "grade"],
+                    },
+                },
+            },
+            "required": ["courses"],
+        },
+    },
+}
+
+
+@app.post("/parse-transcript")
+async def parse_transcript(req: ParseTranscriptRequest, request: Request):
+    check_rate_limit(request)
+    content = req.text.strip()
+    if not content:
+        raise HTTPException(400, "분석할 텍스트가 없습니다.")
+
+    try:
+        resp = client.chat.completions.create(
+            model=MODEL,
+            temperature=0,
+            messages=[
+                {"role": "system", "content": PARSE_TRANSCRIPT_SYSTEM_PROMPT},
+                {"role": "user", "content": f"다음 성적증명서 원문에서 수강 과목을 추출하세요.\n\n{content}"},
+            ],
+            tools=[PARSE_TRANSCRIPT_FUNCTION],
+            tool_choice={"type": "function", "function": {"name": "record_courses"}},
+        )
+    except openai.OpenAIError as e:
+        raise HTTPException(502, f"성적증명서 분석 실패: {e}")
+
+    msg = resp.choices[0].message
+    if not msg.tool_calls:
+        raise HTTPException(502, "구조화된 결과를 받지 못했습니다.")
+    try:
+        result = json.loads(msg.tool_calls[0].function.arguments)
+    except json.JSONDecodeError:
+        raise HTTPException(502, "결과 파싱 실패.")
+
+    # 방어: 모델이 스키마를 벗어난 값을 넣는 극단적 경우를 대비해 한 번 더 검증
+    valid_divisions, valid_grades = set(DIVISIONS), set(GRADES)
+    courses = [
+        c for c in result.get("courses", [])
+        if c.get("name") and c.get("division") in valid_divisions and c.get("grade") in valid_grades
+    ]
+    return {"courses": courses}

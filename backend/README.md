@@ -48,8 +48,11 @@ curl -X POST http://localhost:8000/analyze -H "Content-Type: application/json" ^
 
 - `.env`(API 키)는 **절대 GitHub에 커밋하지 마세요.** (`.gitignore`로 제외됨)
 - 모델 기본값은 `gpt-4o`. 비용을 줄이려면 `.env`의 `CDA_MODEL=gpt-4o-mini`로 변경.
-- 성적증명서/자격증 **이미지·PDF 인식**은 이 스캐폴드에 아직 없습니다(텍스트/링크만).
-  추가하려면 OpenAI에 이미지(vision) 입력을 붙이면 됩니다 — 다음 단계.
+- **성적증명서 PDF 인식**: 교과관리(curricular.html)에서 PDF 첨부 시 `pdf.js`로 텍스트를 뽑아
+  `POST /parse-transcript`로 보내면, AI가 과목명/이수구분/학점/성적을 구조화해 돌려줍니다
+  (텍스트가 있는 PDF만 가능 — 스캔된 이미지형 PDF는 아직 지원하지 않음. 이미지 파일 첨부도 미지원).
+  백엔드가 꺼져 있거나 인식에 실패하면 가짜 데이터로 조용히 넘어가지 않고, 화면에 정직하게
+  안내하고 성적을 직접 입력하도록 유도합니다. (기능만 체험하고 싶으면 "예시로 기능 체험하기" 버튼 사용)
 
 ## 공개(https) 배포 — 배포 사이트(github.io)에서 실제 AI 쓰기
 
