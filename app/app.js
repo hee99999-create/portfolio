@@ -599,7 +599,7 @@ function mountFooter() {
     <div class="footer__col"><h4>나의 기록</h4><a href="dashboard.html">경력관리(비교과)</a><a href="curricular.html">교과역량(성적)</a><a href="competency.html">역량 그래프</a><a href="studio.html">문서 만들기</a></div>
     <div class="footer__col"><h4>도구</h4><a href="coaching.html">AI 선배</a><a href="professor.html">교수</a><a href="admin.html">관리자</a></div>
     </div>
-    <div class="container footer__legal"><p class="fine">활동 목록이 아니라, 증거 있는 역량 자산. · K-CESA 매핑 · 증거로 검증된 것만 자산이 됩니다.</p></div>`;
+    <div class="container footer__legal"><p class="fine">활동 목록이 아니라, 증거 있는 역량 자산. · K-CESA 매핑 · 증거로 검증된 것만 자산이 됩니다. · <a href="privacy.html">개인정보처리방침</a></p></div>`;
 }
 function requireAuth() {
   if (!Session.loggedIn) { location.href = 'login.html?next=' + encodeURIComponent(location.pathname.split('/').pop()); return false; }

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>개인정보처리방침 — PORTRI AI</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav class="nav" data-nav></nav>
+
+<section class="tile tile--white compact">
+  <div class="container prose">
+    <p class="caption">개인정보처리방침</p>
+    <h1>PORTRI AI 개인정보처리방침</h1>
+    <p class="lead mt-2">시행일: 2026년 9월 17일</p>
+
+    <h2 class="mt-4">1. 운영 형태</h2>
+    <p class="mt-2">PORTRI AI는 학회 발표·연구용 데모 서비스입니다. 별도의 회원 데이터베이스를 운영하지 않으며, 이용자가 입력한 정보는 원칙적으로 <strong>이용자 본인의 브라우저(localStorage)</strong>에만 저장됩니다.</p>
+
+    <h2 class="mt-4">2. 처리하는 개인정보 항목</h2>
+    <ul class="mt-2">
+      <li><strong>소셜 로그인(Google·카카오·네이버)</strong>: 이름(또는 닉네임), 이메일 주소(제공에 동의한 경우).</li>
+      <li><strong>이메일 로그인</strong>: 입력한 이메일 주소와 이름. 비밀번호는 저장하지 않습니다.</li>
+      <li><strong>이용자가 직접 입력한 내용</strong>: 경험 기록, 활동 설명, 성적증명서에서 추출한 과목 정보.</li>
+    </ul>
+
+    <h2 class="mt-4">3. 이용 목적</h2>
+    <ul class="mt-2">
+      <li>로그인 상태 유지 및 화면에 이름 표시</li>
+      <li>이용자가 요청한 경험 분석·역량 증거 추출·문서 생성 기능 제공</li>
+    </ul>
+
+    <h2 class="mt-4">4. 보관 위치와 기간</h2>
+    <p class="mt-2">로그인 정보와 입력 내용은 이용자 브라우저에 저장됩니다. 로그아웃하면 로그인 정보가 지워지고, 브라우저의 사이트 데이터를 삭제하면 입력한 내용까지 모두 지워집니다. 운영자 서버에는 저장하지 않습니다.</p>
+
+    <h2 class="mt-4">5. 처리 위탁 및 외부 전송</h2>
+    <ul class="mt-2">
+      <li><strong>OpenAI</strong>: AI 분석 기능을 사용할 때, 분석을 요청한 텍스트가 분석 처리를 위해 전송됩니다.</li>
+      <li><strong>Render(백엔드 호스팅)</strong>: AI 분석 요청과 카카오·네이버 로그인 정보 조회를 중계합니다. 중계한 내용은 저장하지 않으며, 과도한 호출을 막기 위해 IP 주소를 서버 메모리에 일시적으로만 사용합니다.</li>
+      <li><strong>Google·카카오·네이버</strong>: 소셜 로그인 인증을 위해 각 서비스로 이동하며, 해당 서비스의 개인정보처리방침이 적용됩니다.</li>
+    </ul>
+
+    <h2 class="mt-4">6. 이용자의 권리</h2>
+    <p class="mt-2">이용자는 언제든 로그아웃하거나 브라우저의 사이트 데이터를 삭제해 저장된 정보를 지울 수 있습니다. 소셜 로그인 연결은 각 서비스의 계정 설정(연결된 앱 관리)에서 해제할 수 있습니다.</p>
+
+    <h2 class="mt-4">7. 문의</h2>
+    <p class="mt-2">개인정보 관련 문의: <a class="link" href="mailto:hee99999@gmail.com">hee99999@gmail.com</a></p>
+  </div>
+</section>
+
+<footer class="footer" data-footer></footer>
+<script src="app.js"></script>
+<script>mountNav(''); mountFooter();</script>
+</body>
+</html>
