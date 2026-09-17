@@ -481,3 +481,68 @@ async def naver_profile(req: NaverProfileRequest, request: Request):
     except ValueError:
         raise HTTPException(502, "네이버 응답 파싱 실패.")
     return data
+
+
+# ============================================================
+# 카카오 로그인 — 인가 코드 교환 + 프로필 조회 프록시
+# 카카오 JS SDK(v2)는 Auth.login(팝업)을 지원하지 않아 Auth.authorize(전체
+# 페이지 리다이렉트, 인가 코드 방식)를 쓴다. 인가 코드를 access_token으로
+# 바꾸는 카카오 토큰 엔드포인트는 브라우저에서 직접 호출할 수 없어(CORS)
+# 이 서버가 대신 호출한다. REST API 키/클라이언트 ID는 카카오 문서상
+# 공개 식별자이며(클라이언트 시크릿과 다름), 클라이언트 시크릿은 이 앱에서
+# 사용하지 않는다.
+# ============================================================
+class KakaoTokenRequest(BaseModel):
+    code: str = Field(..., min_length=1, max_length=2000)
+    redirect_uri: str = Field(..., min_length=1, max_length=2000)
+    client_id: str = Field(..., min_length=1, max_length=200)
+
+
+@app.post("/oauth/kakao-token")
+async def kakao_token(req: KakaoTokenRequest, request: Request):
+    check_rate_limit(request)
+    try:
+        async with httpx.AsyncClient(timeout=10) as h:
+            r = await h.post(
+                "https://kauth.kakao.com/oauth/token",
+                data={
+                    "grant_type": "authorization_code",
+                    "client_id": req.client_id,
+                    "redirect_uri": req.redirect_uri,
+                    "code": req.code,
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+            )
+    except httpx.HTTPError as e:
+        raise HTTPException(502, f"카카오 토큰 발급 실패: {e}")
+    if r.status_code != 200:
+        raise HTTPException(502, f"카카오 토큰 발급 실패 (status {r.status_code})")
+    try:
+        data = r.json()
+    except ValueError:
+        raise HTTPException(502, "카카오 토큰 응답 파싱 실패.")
+    return data
+
+
+class KakaoProfileRequest(BaseModel):
+    access_token: str = Field(..., min_length=1, max_length=2000)
+
+
+@app.post("/oauth/kakao-profile")
+async def kakao_profile(req: KakaoProfileRequest, request: Request):
+    check_rate_limit(request)
+    try:
+        async with httpx.AsyncClient(timeout=10) as h:
+            r = await h.get(
+                "https://kapi.kakao.com/v2/user/me",
+                headers={"Authorization": f"Bearer {req.access_token}"},
+            )
+    except httpx.HTTPError as e:
+        raise HTTPException(502, f"카카오 프로필 조회 실패: {e}")
+    if r.status_code != 200:
+        raise HTTPException(502, f"카카오 프로필 조회 실패 (status {r.status_code})")
+    try:
+        data = r.json()
+    except ValueError:
+        raise HTTPException(502, "카카오 응답 파싱 실패.")
+    return data

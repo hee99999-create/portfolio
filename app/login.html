@@ -119,9 +119,10 @@ mountNav('login');
                 https://hee99999-create.github.io
               → 생성된 "클라이언트 ID"를 아래 google.clientId에 붙여넣기
    - 카카오:   https://developers.kakao.com → 내 애플리케이션 → 앱 만들기
-              → 플랫폼 → Web 플랫폼 등록(위 두 주소)
-              → 카카오 로그인 활성화, 동의항목에서 닉네임/이메일 설정
-              → "요약 정보"의 "JavaScript 키"를 아래 kakao.jsKey에 붙여넣기
+              → 제품 설정 > 카카오 로그인 > 일반: 사용 설정 ON, 동의항목에서 닉네임 설정
+              → 앱 > 플랫폼 키 > JavaScript 키 카드 클릭 > "카카오 로그인 리다이렉트 URI"에
+                이 로그인 페이지 주소 등록(localhost·github.io 둘 다) 후 저장
+              → JavaScript 키 → kakao.jsKey, REST API 키 → kakao.restKey (둘 다 공개 식별자)
    - 네이버:   https://developers.naver.com/apps → 애플리케이션 등록
               → 사용 API: "네이버 로그인" 추가
               → 서비스 URL / Callback URL에 이 로그인 페이지 주소를 각각 등록
@@ -130,7 +131,7 @@ mountNav('login');
    ============================================================ */
 const SOCIAL_CONFIG = {
   google: { clientId: '939497549606-un0pd1oop8aar138ogln8e0phucmas1m.apps.googleusercontent.com' },
-  kakao:  { jsKey: 'c485133750df53e64f631b12aee48fb9' },
+  kakao:  { jsKey: 'c485133750df53e64f631b12aee48fb9', restKey: '455b4c6837e359d73d57b188e56af0aa' },
   naver:  { clientId: '' },
 };
 
@@ -182,27 +183,62 @@ function loginWithGoogle() {
   client.requestAccessToken();
 }
 
-/* ---- 카카오: JS SDK 팝업 로그인 — 백엔드/시크릿 불필요 ---- */
+/* ---- 카카오: 전체 페이지 리다이렉트(인가 코드 흐름) — 이 페이지가 콜백 역할도 겸함 ----
+   카카오 JS SDK v2는 팝업 로그인(Auth.login)을 지원하지 않아 Auth.authorize로 전체
+   페이지를 리다이렉트한다. 돌아올 때 쿼리에 담긴 인가 코드는 백엔드의
+   /oauth/kakao-token(코드→토큰 교환)과 /oauth/kakao-profile(프로필 조회) 프록시를
+   거친다 — 둘 다 브라우저에서 카카오 API를 직접 호출하면 CORS로 막히기 때문이고,
+   클라이언트 시크릿은 어디에도 사용하지 않는다. */
 function loginWithKakao() {
   if (!window.Kakao || !SOCIAL_CONFIG.kakao.jsKey) return;
-  Kakao.Auth.login({
-    scope: 'profile_nickname',
-    success: () => {
-      Kakao.API.request({
-        url: '/v2/user/me',
-        success: (res) => {
-          const email = res.kakao_account && res.kakao_account.email || '';
-          const name = (res.kakao_account && res.kakao_account.profile && res.kakao_account.profile.nickname)
-            || (res.properties && res.properties.nickname) || '카카오 사용자';
-          Session.login(email, name, 'kakao');
-          location.href = next;
-        },
-        fail: () => showSocialError('카카오 프로필을 가져오지 못했어요. 다시 시도해주세요.'),
-      });
-    },
-    fail: () => showSocialError('카카오 로그인이 취소되었거나 실패했어요.'),
+  const state = Math.random().toString(36).slice(2);
+  sessionStorage.setItem('cda_kakao_state', state);
+  Kakao.Auth.authorize({
+    redirectUri: location.origin + location.pathname,
+    state,
   });
 }
+
+/* 카카오 리다이렉트로 돌아온 경우 처리 (URL 쿼리에 code 포함) */
+(async function handleKakaoCallback() {
+  const qs = new URLSearchParams(location.search);
+  const code = qs.get('code');
+  if (!code) return;
+  const state = qs.get('state');
+  qs.delete('code'); qs.delete('state'); qs.delete('error'); qs.delete('error_description');
+  const cleanQs = qs.toString();
+  history.replaceState(null, '', location.pathname + (cleanQs ? '?' + cleanQs : ''));
+  if (!state || state !== sessionStorage.getItem('cda_kakao_state')) {
+    showSocialError('카카오 로그인 검증에 실패했어요. 다시 시도해주세요.');
+    return;
+  }
+  sessionStorage.removeItem('cda_kakao_state');
+  try {
+    const tokenRes = await fetch(API_BASE + '/oauth/kakao-token', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        code,
+        redirect_uri: location.origin + location.pathname,
+        client_id: SOCIAL_CONFIG.kakao.restKey,
+      }),
+    });
+    if (!tokenRes.ok) throw new Error('토큰 발급 실패');
+    const { access_token } = await tokenRes.json();
+    const profileRes = await fetch(API_BASE + '/oauth/kakao-profile', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ access_token }),
+    });
+    if (!profileRes.ok) throw new Error('프로필 조회 실패');
+    const res = await profileRes.json();
+    const email = res.kakao_account && res.kakao_account.email || '';
+    const name = (res.kakao_account && res.kakao_account.profile && res.kakao_account.profile.nickname)
+      || (res.properties && res.properties.nickname) || '카카오 사용자';
+    Session.login(email, name, 'kakao');
+    location.href = next;
+  } catch (e) {
+    showSocialError('카카오 로그인에 실패했어요. 잠시 후 다시 시도해주세요.');
+  }
+})();
 
 /* ---- 네이버: 전체 페이지 리다이렉트(암묵적 흐름) — 이 페이지가 콜백 역할도 겸함 ----
    프로필 조회는 브라우저에서 네이버 API를 직접 호출하면 CORS로 막히므로,
