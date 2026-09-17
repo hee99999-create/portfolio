@@ -130,7 +130,7 @@ mountNav('login');
    ============================================================ */
 const SOCIAL_CONFIG = {
   google: { clientId: '939497549606-un0pd1oop8aar138ogln8e0phucmas1m.apps.googleusercontent.com' },
-  kakao:  { jsKey: '' },
+  kakao:  { jsKey: 'c485133750df53e64f631b12aee48fb9' },
   naver:  { clientId: '' },
 };
 
@@ -186,7 +186,7 @@ function loginWithGoogle() {
 function loginWithKakao() {
   if (!window.Kakao || !SOCIAL_CONFIG.kakao.jsKey) return;
   Kakao.Auth.login({
-    scope: 'profile_nickname,account_email',
+    scope: 'profile_nickname',
     success: () => {
       Kakao.API.request({
         url: '/v2/user/me',
