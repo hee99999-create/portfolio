@@ -336,11 +336,22 @@ function analyzeTranscript(courses) {
   return scores;
 }
 const SAMPLE_COURSES = [
+  { name: '컴퓨터프로그래밍', division: '전공필수', credit: 3, grade: 'A0' },
   { name: '자료구조', division: '전공필수', credit: 3, grade: 'A+' },
+  { name: '알고리즘', division: '전공필수', credit: 3, grade: 'B+' },
+  { name: '운영체제', division: '전공필수', credit: 3, grade: 'B+' },
+  { name: '컴퓨터네트워크', division: '전공필수', credit: 3, grade: 'A0' },
   { name: '데이터베이스', division: '전공선택', credit: 3, grade: 'A0' },
+  { name: '데이터마이닝', division: '전공선택', credit: 3, grade: 'A+' },
+  { name: '기계학습 입문', division: '전공선택', credit: 3, grade: 'A0' },
+  { name: '소프트웨어공학', division: '전공선택', credit: 3, grade: 'B+' },
+  { name: '캡스톤디자인', division: '전공선택', credit: 3, grade: 'A+' },
+  { name: '확률과 통계', division: '교양', credit: 3, grade: 'B+' },
   { name: '글로벌 커뮤니케이션', division: '교양', credit: 2, grade: 'A+' },
   { name: '비판적 사고와 글쓰기', division: '교양', credit: 2, grade: 'B+' },
+  { name: '데이터 윤리와 사회', division: '교양', credit: 2, grade: 'A0' },
   { name: '창업과 팀워크', division: '일반선택', credit: 2, grade: 'A0' },
+  { name: '대학생활과 진로설계', division: '일반선택', credit: 1, grade: 'A+' },
 ];
 
 /* ============================================================

@@ -216,8 +216,14 @@ if (requireAuth()) {
     el.oninput = () => localStorage.setItem(docKey(), el.innerHTML);
     themeToDoc(currentTheme());
   }
-  /* 프로필(사진·연락처·학력) */
-  function getProfile() { try { return JSON.parse(localStorage.getItem('cda_profile')) || {}; } catch { return {}; } }
+  /* 프로필(사진·연락처·학력) — 저장 전에는 데모용 예시 학력/연락처를 보여준다.
+     이름·이메일은 비워 둬야 로그인 계정의 실제 값이 그대로 쓰인다. */
+  const DEMO_PROFILE = { phone: '010-1234-5678', school: 'OO대학교', major: '컴퓨터공학과', grade: '4학년 / 2027 졸업예정' };
+  function getProfile() {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem('cda_profile')) || {}; } catch { saved = {}; }
+    return localStorage.getItem('cda_profile') ? saved : { ...DEMO_PROFILE };
+  }
   /* 문서별 경험 선택·순서(드래그) — 이력서·포트폴리오 공용 + 대표 이미지 */
   const SEL_KEY = { portfolio: 'cda_portfolio_sel', resume: 'cda_resume_sel' };
   const ORDER_KEY = { portfolio: 'cda_portfolio_order', resume: 'cda_resume_order' };
