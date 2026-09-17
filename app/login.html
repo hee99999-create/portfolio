@@ -122,7 +122,8 @@ mountNav('login');
               → 제품 설정 > 카카오 로그인 > 일반: 사용 설정 ON, 동의항목에서 닉네임 설정
               → 앱 > 플랫폼 키 > JavaScript 키 카드 클릭 > "카카오 로그인 리다이렉트 URI"에
                 이 로그인 페이지 주소 등록(localhost·github.io 둘 다) 후 저장
-              → JavaScript 키 → kakao.jsKey, REST API 키 → kakao.restKey (둘 다 공개 식별자)
+              → JavaScript SDK 도메인에 localhost·github.io 도메인도 등록
+              → JavaScript 키를 아래 kakao.jsKey에 붙여넣기 (공개 식별자)
    - 네이버:   https://developers.naver.com/apps → 애플리케이션 등록
               → 사용 API: "네이버 로그인" 추가
               → 서비스 URL / Callback URL에 이 로그인 페이지 주소를 각각 등록
@@ -131,7 +132,7 @@ mountNav('login');
    ============================================================ */
 const SOCIAL_CONFIG = {
   google: { clientId: '939497549606-un0pd1oop8aar138ogln8e0phucmas1m.apps.googleusercontent.com' },
-  kakao:  { jsKey: 'c485133750df53e64f631b12aee48fb9', restKey: '455b4c6837e359d73d57b188e56af0aa' },
+  kakao:  { jsKey: 'c485133750df53e64f631b12aee48fb9' },
   naver:  { clientId: '' },
 };
 
@@ -219,7 +220,7 @@ function loginWithKakao() {
       body: JSON.stringify({
         code,
         redirect_uri: location.origin + location.pathname,
-        client_id: SOCIAL_CONFIG.kakao.restKey,
+        client_id: SOCIAL_CONFIG.kakao.jsKey, // 인가 코드를 발급받은 키와 같아야 함(REST 키는 KOE010)
       }),
     });
     if (!tokenRes.ok) throw new Error('토큰 발급 실패');

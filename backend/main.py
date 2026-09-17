@@ -516,7 +516,12 @@ async def kakao_token(req: KakaoTokenRequest, request: Request):
     except httpx.HTTPError as e:
         raise HTTPException(502, f"카카오 토큰 발급 실패: {e}")
     if r.status_code != 200:
-        raise HTTPException(502, f"카카오 토큰 발급 실패 (status {r.status_code})")
+        try:
+            kakao_code = r.json().get("error_code", "")
+        except ValueError:
+            kakao_code = ""
+        print(f"[kakao-token] 실패 status={r.status_code} error_code={kakao_code}")
+        raise HTTPException(502, f"카카오 토큰 발급 실패 (status {r.status_code} {kakao_code})".rstrip())
     try:
         data = r.json()
     except ValueError:
