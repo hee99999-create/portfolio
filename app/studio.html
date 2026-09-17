@@ -179,10 +179,10 @@ if (requireAuth()) {
   const allEvidence = items.flatMap(x => verifiedComps(x).map(c => ({ ...c, from: x.title })));
   const cite = (n, ev) => `<span class="cite">[${n}]<span class="cite__tip">${ev.evidence}<span class="src">${ev.src} · ${ev.from || ''}</span></span></span>`;
   const shell = (eyebrow, name, subLines, body, photo) => {
-    const subs = (subLines || []).filter(Boolean).map(s => `<div class="doc-sub">${s}</div>`).join('');
+    const subs = (subLines || []).filter(Boolean).map(s => `<div class="doc-sub">${escapeHtml(s)}</div>`).join('');
     const pic = photo ? `<img class="doc-photo" src="${photo}" alt="">` : '';
     return `<div class="doc"><div class="doc-head" style="display:flex;gap:24px;align-items:flex-start">`
-      + `<div style="flex:1"><div class="doc-eyebrow">${eyebrow}</div><h1 class="doc-t">${name}</h1>${subs}</div>${pic}</div>`
+      + `<div style="flex:1"><div class="doc-eyebrow">${eyebrow}</div><h1 class="doc-t">${escapeHtml(name)}</h1>${subs}</div>${pic}</div>`
       + `${body}<div class="doc-footer"><span>PORTRI AI · 증거 기반 역량 리포트</span><span>${DOC_DATE}</span></div></div>`;
   };
 
@@ -478,14 +478,14 @@ if (requireAuth()) {
     if (tpl === 'sidebar') {
       return `<div class="doc tpl-sidebar"><div class="rz-side">
         <aside>${d.photo ? `<img class="doc-photo" src="${d.photo}">` : ''}
-          <div class="doc-eyebrow" style="margin-top:10px">이력서</div><h1 class="doc-t" style="font-size:1.7rem">${d.name}</h1>
-          ${d.contact ? `<div class="doc-sub">${d.contact}</div>` : ''}${d.edu ? `<div class="doc-sub">${d.edu}</div>` : ''}
+          <div class="doc-eyebrow" style="margin-top:10px">이력서</div><h1 class="doc-t" style="font-size:1.7rem">${escapeHtml(d.name)}</h1>
+          ${d.contact ? `<div class="doc-sub">${escapeHtml(d.contact)}</div>` : ''}${d.edu ? `<div class="doc-sub">${d.edu}</div>` : ''}
           ${core}</aside>
         <main>${d.academic}${d.sections}${d.note}</main></div>${footer}</div>`;
     }
     const head = `<div class="doc-head" style="display:flex;gap:24px;align-items:flex-start">
-      <div style="flex:1"><div class="doc-eyebrow">이력서 · RÉSUMÉ</div><h1 class="doc-t">${d.name}</h1>
-        ${d.contact ? `<div class="doc-sub">${d.contact}</div>` : ''}${d.edu ? `<div class="doc-sub">${d.edu}</div>` : ''}</div>
+      <div style="flex:1"><div class="doc-eyebrow">이력서 · RÉSUMÉ</div><h1 class="doc-t">${escapeHtml(d.name)}</h1>
+        ${d.contact ? `<div class="doc-sub">${escapeHtml(d.contact)}</div>` : ''}${d.edu ? `<div class="doc-sub">${d.edu}</div>` : ''}</div>
       ${d.photo ? `<img class="doc-photo" src="${d.photo}">` : ''}</div>`;
     return `<div class="doc tpl-${tpl}">${head}${core}${d.academic}${d.sections}${d.note}${footer}</div>`;
   }

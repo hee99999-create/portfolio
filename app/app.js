@@ -579,11 +579,14 @@ const NAV_LINKS = [
   { href: 'competency.html', label: '역량', key: 'competency' },
   { href: 'studio.html', label: '문서', key: 'studio' },
 ];
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
 function mountNav(active) {
   const el = document.querySelector('[data-nav]'); if (!el) return;
   const links = NAV_LINKS.map(l => `<a class="nav__link ${l.key === active ? 'active' : ''}" href="${l.href}">${l.label}</a>`).join('');
   const right = Session.loggedIn
-    ? `<span class="nav__link">${Session.user.name}</span><a class="nav__link" href="#" onclick="Session.logout();location.href='home.html';return false">로그아웃</a>`
+    ? `<span class="nav__link">${escapeHtml(Session.user.name)}</span><a class="nav__link" href="#" onclick="Session.logout();location.href='home.html';return false">로그아웃</a>`
     : `<a class="btn btn--primary" style="padding:5px 16px;font-size:13px" href="login.html">시작하기</a>`;
   el.innerHTML = `<a class="nav__brand" href="home.html"><span class="mark">P</span>PORTRI&nbsp;<span class="ai">AI</span></a>
     <button class="nav__toggle" aria-label="메뉴 열기" onclick="this.closest('.nav').classList.toggle('open')">☰</button>
