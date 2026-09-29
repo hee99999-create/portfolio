@@ -15,7 +15,7 @@ services:
       - key: CDA_MODEL
         value: gpt-4o-mini   # 비용 절감을 위해 무료 배포 기본값은 mini 모델 권장
       - key: CDA_ALLOWED_ORIGINS
-        value: https://hee99999-create.github.io,http://localhost:8125
+        value: https://hee99999-create.github.io,https://portfolio-app-six-bice.vercel.app,http://localhost:8125
       - key: CDA_RATE_LIMIT_PER_HOUR
         value: "20"
       - key: CDA_MAX_TEXT_LEN
