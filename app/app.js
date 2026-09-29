@@ -189,14 +189,16 @@ function autoTitle(source, url, label) {
 
 /* ============================================================
    실제 백엔드 연동 (OpenAI). 꺼져 있으면 null → mock 폴백.
-   배포 사이트(github.io)에서는 기본값으로 Render에 배포된 공개 백엔드를 쓰고,
-   그 외(로컬 개발 등)에서는 localhost:8000을 기본값으로 쓴다.
+   로컬 개발(localhost/127.0.0.1)에서는 localhost:8000을 기본값으로 쓰고,
+   그 외 모든 배포 주소(github.io, vercel.app, 커스텀 도메인 등)에서는
+   Render에 배포된 공개 백엔드를 기본값으로 쓴다. 호스팅을 옮겨도 이 로직은 그대로 동작한다.
    필요하면 언제든 localStorage.setItem('cda_api','https://...') 로 덮어쓸 수 있다.
    ============================================================ */
 const PRODUCTION_API_BASE = 'https://portri-ai-backend.onrender.com';
-const DEFAULT_API_BASE = (typeof location !== 'undefined' && location.hostname === 'hee99999-create.github.io')
-  ? PRODUCTION_API_BASE
-  : 'http://localhost:8000';
+const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1']);
+const DEFAULT_API_BASE = (typeof location !== 'undefined' && LOCAL_HOSTNAMES.has(location.hostname))
+  ? 'http://localhost:8000'
+  : PRODUCTION_API_BASE;
 const API_BASE = (typeof localStorage !== 'undefined' && localStorage.getItem('cda_api')) || DEFAULT_API_BASE;
 /* 백엔드(AI) 살아있는지 확인 → {status, model, provider} 또는 null */
 async function checkBackend() {
